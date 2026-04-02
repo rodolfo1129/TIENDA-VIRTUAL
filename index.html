@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arktech Store | Sistema Centralizado</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <header>
+        <nav class="navbar">
+            <div class="logo" onclick="mostrarSeccion('tienda')">Arktech<span>Store</span></div>
+            <ul class="nav-links">
+                <li><a href="#" onclick="mostrarSeccion('tienda')">Catálogo</a></li>
+                <li><a href="#" onclick="mostrarSeccion('admin')">Configuración</a></li>
+                <li>
+                    <a href="#" class="cart-icon" onclick="toggleCarrito()">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span id="cart-count">0</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main id="seccion-tienda" class="container">
+        <div class="header-view">
+            <h1>Explora nuestros productos</h1>
+            <p>Seleccionados para la máxima eficiencia tecnológica.</p>
+        </div>
+        <div id="grid-productos" class="grid">
+            </div>
+    </main>
+
+    <section id="seccion-admin" class="container" style="display:none;">
+        <div class="admin-grid">
+            <div class="admin-card">
+                <h2><i class="fas fa-edit"></i> Registrar Producto</h2>
+                <form id="form-nuevo-producto">
+                    <input type="text" id="nombre" placeholder="Nombre (Ej: Monitor 24')" required>
+                    <select id="categoria">
+                        <option value="Tecnología">Tecnología</option>
+                        <option value="Herramientas">Herramientas</option>
+                        <option value="Hogar">Hogar</option>
+                    </select>
+                    <input type="number" id="precio" placeholder="Precio ($)" step="0.01" required>
+                    <input type="number" id="stock" placeholder="Cantidad disponible" required>
+                    <input type="text" id="imagen" placeholder="URL de imagen (opcional)">
+                    <button type="submit" class="btn-primary">Guardar Producto</button>
+                </form>
+            </div>
+
+            <div class="admin-card">
+                <h2><i class="fas fa-list"></i> Inventario</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Precio</th>
+                                <th>Stock</th>
+                                <th>Eliminar</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-admin"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div id="sidebar-carrito" class="sidebar">
+        <div class="sidebar-header">
+            <h3>Tu Pedido</h3>
+            <button onclick="toggleCarrito()">&times;</button>
+        </div>
+        <div id="items-carrito" class="sidebar-body">
+            </div>
+        <div class="sidebar-footer">
+            <div class="fila-total"><span>Subtotal:</span><span id="subtotal">$0.00</span></div>
+            <div class="fila-total"><span>IVA (19%):</span><span id="iva">$0.00</span></div>
+            <div class="fila-total total"><span>Total:</span><span id="total">$0.00</span></div>
+            <button class="btn-pagar" onclick="finalizarCompra()">Confirmar Pedido</button>
+        </div>
+    </div>
+
+    <div id="capa-oscura" class="overlay" onclick="toggleCarrito()"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
