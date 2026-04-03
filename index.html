@@ -3,90 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arktech Store | Sistema Centralizado</title>
+    <title>Arktech Store | Tienda Virtual</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-
-    <header>
-        <nav class="navbar">
-            <div class="logo" onclick="mostrarSeccion('tienda')">Arktech<span>Store</span></div>
-            <ul class="nav-links">
-                <li><a href="#" onclick="mostrarSeccion('tienda')">Catálogo</a></li>
-                <li><a href="#" onclick="mostrarSeccion('admin')">Configuración</a></li>
-                <li>
-                    <a href="#" class="cart-icon" onclick="toggleCarrito()">
-                        <i class="fas fa-shopping-cart"></i>
-                        <span id="cart-count">0</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
-    </header>
-
-    <main id="seccion-tienda" class="container">
-        <div class="header-view">
-            <h1>Explora nuestros productos</h1>
-            <p>Seleccionados para la máxima eficiencia tecnológica.</p>
+    <nav class="navbar">
+        <div class="logo" onclick="navegar('tienda')">Arktech<span>Store</span></div>
+        <div class="menu">
+            <a onclick="navegar('tienda')">Catálogo</a>
+            <a onclick="navegar('admin')">Administrador</a>
+            <div class="cart-icon" onclick="navegar('carrito')">
+                <i class="fas fa-shopping-bag"></i>
+                <span id="cart-count">0</span>
+            </div>
         </div>
-        <div id="grid-productos" class="grid">
-            </div>
-    </main>
+    </nav>
 
-    <section id="seccion-admin" class="container" style="display:none;">
-        <div class="admin-grid">
-            <div class="admin-card">
-                <h2><i class="fas fa-edit"></i> Registrar Producto</h2>
-                <form id="form-nuevo-producto">
-                    <input type="text" id="nombre" placeholder="Nombre (Ej: Monitor 24')" required>
-                    <select id="categoria">
-                        <option value="Tecnología">Tecnología</option>
-                        <option value="Herramientas">Herramientas</option>
-                        <option value="Hogar">Hogar</option>
-                    </select>
-                    <input type="number" id="precio" placeholder="Precio ($)" step="0.01" required>
-                    <input type="number" id="stock" placeholder="Cantidad disponible" required>
-                    <input type="text" id="imagen" placeholder="URL de imagen (opcional)">
-                    <button type="submit" class="btn-primary">Guardar Producto</button>
-                </form>
-            </div>
+    <section id="vista-tienda" class="container">
+        <h1 class="section-title">Nuestros Equipos</h1>
+        <div id="grid-productos" class="grid-layout"></div>
+    </section>
 
-            <div class="admin-card">
-                <h2><i class="fas fa-list"></i> Inventario</h2>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Nombre</th>
-                                <th>Precio</th>
-                                <th>Stock</th>
-                                <th>Eliminar</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabla-admin"></tbody>
-                    </table>
+    <section id="vista-detalle" class="container" style="display:none;">
+        <div class="detail-layout card">
+            <div class="detalle-superior">
+                <div class="galeria-ver-2">
+                    <img id="main-img" src="" alt="Producto">
+                    <div id="thumb-container" class="thumbs"></div>
                 </div>
+                <div class="info-ver-2">
+                    <button class="btn-back-ver-2" onclick="navegar('tienda')">← Volver al catálogo</button>
+                    <h2 id="det-name"></h2>
+                    <p id="det-price" class="price-tag-ver-2"></p>
+                    <div class="separador-ver-2"></div>
+                    <button id="add-to-cart-btn-det" class="btn-primary">AGREGAR AL CARRITO</button>
+                </div>
+            </div>
+            <div class="detalle-inferior">
+                <div class="separador-ver-2"></div>
+                <h3>Descripción Técnica</h3>
+                <p id="det-desc" class="desc-text-ver-2"></p>
             </div>
         </div>
     </section>
 
-    <div id="sidebar-carrito" class="sidebar">
-        <div class="sidebar-header">
-            <h3>Tu Pedido</h3>
-            <button onclick="toggleCarrito()">&times;</button>
-        </div>
-        <div id="items-carrito" class="sidebar-body">
+    <section id="vista-admin" class="container" style="display:none;">
+        <div class="admin-grid">
+            <div class="form-card card">
+                <h2 id="form-title">Gestión de Inventario</h2>
+                <form id="product-form">
+                    <input type="hidden" id="edit-id">
+                    <div class="input-group">
+                        <label>Nombre del Producto</label>
+                        <input type="text" id="name" placeholder="Ej: Portátil Asus Zenbook" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label>Precio ($)</label>
+                            <input type="number" id="price" placeholder="0" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Stock</label>
+                            <input type="number" id="stock" placeholder="Uds" required>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Descripción</label>
+                        <textarea id="desc" rows="4" placeholder="Detalles del equipo..." required></textarea>
+                    </div>
+                    <div class="upload-area">
+                        <label for="file-input" class="drop-zone">
+                            <i class="fas fa-camera"></i>
+                            <span>Selecciona mín. 3 fotos (Usa CTRL)</span>
+                        </label>
+                        <input type="file" id="file-input" multiple accept="image/*">
+                        <div id="file-previews" class="preview-strip"></div>
+                    </div>
+                    <button type="submit" id="save-btn" class="btn-primary">GUARDAR PRODUCTO</button>
+                    <button type="button" id="cancel-btn" class="btn-outline" style="display:none" onclick="resetForm()">CANCELAR</button>
+                </form>
             </div>
-        <div class="sidebar-footer">
-            <div class="fila-total"><span>Subtotal:</span><span id="subtotal">$0.00</span></div>
-            <div class="fila-total"><span>IVA (19%):</span><span id="iva">$0.00</span></div>
-            <div class="fila-total total"><span>Total:</span><span id="total">$0.00</span></div>
-            <button class="btn-pagar" onclick="finalizarCompra()">Confirmar Pedido</button>
+            <div class="list-card card">
+                <h2>Productos en Stock</h2>
+                <table class="modern-table">
+                    <thead>
+                        <tr>
+                            <th>REF</th>
+                            <th>PRODUCTO</th>
+                            <th>STOCK</th>
+                            <th>ACCIONES</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventory-list"></tbody>
+                </table>
+            </div>
         </div>
-    </div>
+    </section>
 
-    <div id="capa-oscura" class="overlay" onclick="toggleCarrito()"></div>
+    <section id="vista-carrito" class="container" style="display:none;">
+        <div class="card">
+            <h2>Tu Carrito</h2>
+            <div class="separador-ver-2"></div>
+            <table class="modern-table">
+                <thead>
+                    <tr>
+                        <th>Imagen</th>
+                        <th>Producto</th>
+                        <th>Cant.</th>
+                        <th>Subtotal</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="cart-items-list"></tbody>
+            </table>
+            <div class="cart-footer">
+                <h3>Total: <span id="cart-total-price">$0</span></h3>
+                <button class="btn-primary" style="width:200px; margin-top:20px;">Finalizar Compra</button>
+            </div>
+        </div>
+    </section>
 
     <script src="app.js"></script>
 </body>
