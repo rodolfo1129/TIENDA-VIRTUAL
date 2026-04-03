@@ -59,3 +59,121 @@ input, textarea { width: 100%; padding: 12px; border: 2px solid var(--border); b
 .btn-primary { background: var(--main); color: white; border: none; padding: 16px; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.3s; }
 .btn-primary:hover { background: #243b55; }
 .btn-outline { background: none; border: 1px solid #cbd5e1; padding: 10px; border-radius: 8px; width: 100%; margin-top: 10px; cursor: pointer; }
+
+/* AJUSTES PARA LA NUEVA BARRA SUPERIOR */
+.nav-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+}
+
+.nav-title {
+    color: white;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.search-navbar {
+    width: 100%;
+    max-width: 450px;
+}
+
+.search-navbar input {
+    width: 100%;
+    padding: 10px 20px;
+    border-radius: 25px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    outline: none;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.search-navbar input:focus {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: var(--teal);
+    box-shadow: 0 0 10px rgba(67, 193, 172, 0.3);
+}
+
+.search-navbar input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Ajuste para que el logo y menú no se muevan */
+.navbar .logo, .navbar .menu {
+    flex-shrink: 0;
+}
+
+/* ESTILOS DEL SIDEBAR */
+.sidebar {
+    height: 100%;
+    width: 0; /* Empieza cerrada */
+    position: fixed;
+    z-index: 2000;
+    top: 0;
+    left: 0;
+    background-color: var(--main);
+    overflow-x: hidden;
+    transition: 0.4s; /* Velocidad del despliegue */
+    padding-top: 20px;
+    box-shadow: 5px 0 15px rgba(0,0,0,0.3);
+}
+
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px 20px 20px;
+    color: white;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.sidebar-content {
+    padding: 20px 0;
+}
+
+.sidebar-content a {
+    padding: 15px 25px;
+    text-decoration: none;
+    font-size: 1.1rem;
+    color: #cbd5e1;
+    display: block;
+    transition: 0.3s;
+}
+
+.sidebar-content a i {
+    margin-right: 15px;
+    width: 20px;
+    color: var(--teal);
+}
+
+.sidebar-content a:hover {
+    background: rgba(255,255,255,0.05);
+    color: white;
+    padding-left: 35px;
+}
+
+.sidebar-divider {
+    height: 1px;
+    background: rgba(255,255,255,0.1);
+    margin: 15px 25px;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 2rem;
+    cursor: pointer;
+}
+
+.wa-link {
+    color: #25d366 !important; /* Color oficial de WhatsApp */
+    font-weight: bold;
+}
