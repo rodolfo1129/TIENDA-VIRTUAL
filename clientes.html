@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Cliente | Arktech Store</title>
+    <link rel="stylesheet" href="styles.css"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar" style="height: 80px;">
+        <div class="logo" onclick="location.href='index.html'">Arktech<span>Store</span></div>
+        <div class="menu">
+            <a href="index.html">Volver a la Tienda</a>
+        </div>
+    </nav>
+
+    <div class="container" style="max-width: 600px; margin-top: 50px;">
+        <div class="card">
+            <h2 style="text-align: center; margin-bottom: 25px; color: var(--main);">Registro de Cliente</h2>
+            <form id="form-cliente">
+                <div class="input-group">
+                    <label><i class="fas fa-user"></i> Nombre Completo</label>
+                    <input type="text" id="cliente-nombre" placeholder="Ej: Juan Pérez" required>
+                </div>
+
+                <div class="input-group">
+                    <label><i class="fas fa-id-card"></i> Identificación (Cédula/NIT)</label>
+                    <input type="text" id="cliente-id" placeholder="Número de documento" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="input-group">
+                        <label><i class="fas fa-phone"></i> Teléfono</label>
+                        <input type="tel" id="cliente-tel" placeholder="300 000 0000" required>
+                    </div>
+                    <div class="input-group">
+                        <label><i class="fas fa-envelope"></i> Correo Electrónico</label>
+                        <input type="email" id="cliente-email" placeholder="correo@ejemplo.com" required>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label><i class="fas fa-map-marker-alt"></i> Dirección de Entrega</label>
+                    <input type="text" id="cliente-dir" placeholder="Calle, Carrera, Barrio y Ciudad" required>
+                </div>
+
+                <div class="input-group">
+                    <label><i class="fas fa-comment-dots"></i> Notas Adicionales (Opcional)</label>
+                    <textarea id="cliente-notas" rows="3" placeholder="Indicaciones para el repartidor..."></textarea>
+                </div>
+
+                <button type="submit" class="btn-primary" style="margin-top: 20px;">
+                    CONFIRMAR DATOS Y PAGAR <i class="fas fa-arrow-right"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script type="text/javascript" src="https://checkout.epayco.co/checkout.js"></script>
+
+<script>
+    // 1. Configuración de la llave de ePayco (Modo Pruebas)
+    const handler = ePayco.checkout.configure({
+        key: '45db734d9551a378855474328546995', // Esta es una llave pública de prueba
+        test: true
+    });
+
+    // 2. Al darle clic a "Confirmar Datos"
+    document.getElementById('form-cliente').onsubmit = function(e) {
+        e.preventDefault();
+
+        // 3. Recuperamos el total que guardamos en la tienda (localStorage)
+        const totalVenta = localStorage.getItem('totalVenta');
+
+        if (!totalVenta || totalVenta == 0) {
+            alert("Error: No hay un total de venta registrado. Regresa al carrito.");
+            return;
+        }
+
+        // 4. Parámetros que se envían a ePayco
+        const data = {
+            name: "Compra Arktech Store",
+            description: "Equipos de Tecnología",
+            currency: "cop",
+            amount: totalVenta, // El valor real del carrito
+            tax_base: "0",
+            tax: "0",
+            country: "co",
+            lang: "es",
+
+            // Información del cliente (se llena solo en la pasarela)
+            external: "false",
+            extra1: document.getElementById('cliente-id').value, 
+            extra2: document.getElementById('cliente-dir').value,
+
+            // URL de respuesta (donde vuelve el cliente al terminar)
+            response: window.location.href, 
+
+            // Datos de facturación tomados de tu formulario
+            name_billing: document.getElementById('cliente-nombre').value,
+            address_billing: document.getElementById('cliente-dir').value,
+            type_doc_billing: "cc",
+            mobile_phone_billing: document.getElementById('cliente-tel').value,
+            number_doc_billing: document.getElementById('cliente-id').value
+        };
+
+        // 5. Abre el Pop-up de pago seguro
+        handler.open(data);
+    };
+</script>
+</body>
+</html>
