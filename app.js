@@ -160,3 +160,32 @@ function renderCarrito() {
 }
 
 navegar('tienda');
+
+// --- FUNCIÓN DEL BUSCADOR ---
+function filtrarProductos() {
+    const texto = document.getElementById('input-busqueda').value.toLowerCase();
+    const productos = document.querySelectorAll('#grid-productos .card');
+
+    productos.forEach(card => {
+        const nombre = card.querySelector('h3').innerText.toLowerCase();
+        if (nombre.includes(texto)) {
+            card.style.display = "flex";
+        } else {
+            card.style.display = "none";
+        }
+    });
+}
+
+// --- CONTROL DEL SIDEBAR ---
+let sidebarOpen = false;
+
+function toggleSidebar() {
+    const sidebar = document.getElementById("sidebar");
+    if (!sidebarOpen) {
+        sidebar.style.width = "300px";
+        sidebarOpen = true;
+    } else {
+        sidebar.style.width = "0";
+        sidebarOpen = false;
+    }
+}
