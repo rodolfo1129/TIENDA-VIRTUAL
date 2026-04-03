@@ -8,22 +8,50 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <nav class="navbar">
+      <div id="sidebar" class="sidebar">
+    <div class="sidebar-header">
+        <h3>Nuestros Servicios</h3>
+        <button onclick="toggleSidebar()" class="close-btn">&times;</button>
+    </div>
+    <div class="sidebar-content">
+        <a href="#"><i class="fas fa-tools"></i> Soporte Técnico</a>
+        <a href="#"><i class="fas fa-shield-alt"></i> Garantías</a>
+        <a href="#"><i class="fas fa-truck"></i> Rastreo de Envío</a>
+        <div class="sidebar-divider"></div>
+        <a href="https://wa.me/tu_numero" target="_blank" class="wa-link">
+            <i class="fab fa-whatsapp"></i> WhatsApp Ventas
+        </a>
+        <a href="#"><i class="fas fa-headset"></i> Centro de Ayuda</a>
+    </div>
+</div>
+   <nav class="navbar" style="height: 100px; padding: 0 5%;">
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <button onclick="toggleSidebar()" style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;">
+            <i class="fas fa-bars"></i>
+        </button>
         <div class="logo" onclick="navegar('tienda')">Arktech<span>Store</span></div>
-        <div class="menu">
-            <a onclick="navegar('tienda')">Catálogo</a>
-            <a onclick="navegar('admin')">Administrador</a>
-            <div class="cart-icon" onclick="navegar('carrito')">
-                <i class="fas fa-shopping-bag"></i>
-                <span id="cart-count">0</span>
-            </div>
+    </div>
+        
+    <div class="nav-center">
+        <h1 class="nav-title">Nuestros Productos</h1>
+        <div class="search-navbar">
+            <input type="text" id="input-busqueda" placeholder="🔍 Buscar producto..." onkeyup="filtrarProductos()">
         </div>
-    </nav>
+    </div>
 
-    <section id="vista-tienda" class="container">
-        <h1 class="section-title">Nuestros Equipos</h1>
-        <div id="grid-productos" class="grid-layout"></div>
-    </section>
+    <div class="menu">
+        <a onclick="navegar('tienda')">Catálogo</a>
+        <a onclick="navegar('admin')">Administrador</a>
+        <div class="cart-icon" onclick="navegar('carrito')">
+            <i class="fas fa-shopping-bag"></i>
+            <span id="cart-count">0</span>
+        </div>
+    </div>
+</nav>
+
+<section id="vista-tienda" class="container">
+    <div id="grid-productos" class="grid-layout" style="margin-top: 20px;"></div>
+</section>
 
     <section id="vista-detalle" class="container" style="display:none;">
         <div class="detail-layout card">
@@ -119,7 +147,7 @@
             </table>
             <div class="cart-footer">
                 <h3>Total: <span id="cart-total-price">$0</span></h3>
-                <button class="btn-primary" style="width:200px; margin-top:20px;">Finalizar Compra</button>
+                <button class="btn-primary" style="width:200px; margin-top:20px;" onclick="location.href='clientes.html'">Finalizar Compra</button>
             </div>
         </div>
     </section>
