@@ -59,54 +59,89 @@
     <script type="text/javascript" src="https://checkout.epayco.co/checkout.js"></script>
 
 <script>
-    // 1. Configuración de la llave de ePayco (Modo Pruebas)
-    const handler = ePayco.checkout.configure({
-        key: '45db734d9551a378855474328546995', // Esta es una llave pública de prueba
-        test: true
-    });
+    // Dentro del <script> de clientes.html, al puro principio:
+const totalCompra = localStorage.getItem('total_compra');
 
-    // 2. Al darle clic a "Confirmar Datos"
-    document.getElementById('form-cliente').onsubmit = function(e) {
-        e.preventDefault();
+if (!totalCompra || totalCompra == 0) {
+    alert("No detectamos un total de compra. Regresando a la tienda...");
+    window.location.href = 'index.html';
+} else {
+    console.log("Total cargado para pagar: $" + totalCompra);
+}
+// 1. Configuración de ePayco
+const handler = ePayco.checkout.configure({
+    key: 'bdb149b838ad1858a72a78d226081ace53cde4f5', 
+    test: true
+});
 
-        // 3. Recuperamos el total que guardamos en la tienda (localStorage)
-        const totalVenta = localStorage.getItem('totalVenta');
+document.getElementById('form-cliente').onsubmit = async function(e) {
+    e.preventDefault();
 
-        if (!totalVenta || totalVenta == 0) {
-            alert("Error: No hay un total de venta registrado. Regresa al carrito.");
-            return;
-        }
+    // 2. RECUPERAMOS EL TOTAL REAL (Lo que guardamos en localStorage en index.html)
+    // Si por alguna razón no existe, usamos 0 para evitar que el código se rompa.
+    const totalCompra = localStorage.getItem('total_compra') || 0;
 
-        // 4. Parámetros que se envían a ePayco
-        const data = {
-            name: "Compra Arktech Store",
-            description: "Equipos de Tecnología",
-            currency: "cop",
-            amount: totalVenta, // El valor real del carrito
-            tax_base: "0",
-            tax: "0",
-            country: "co",
-            lang: "es",
+    // 3. VALIDACIÓN: Si el total es 0, no dejamos seguir.
+    if (parseFloat(totalCompra) <= 0) {
+        alert("Error: Tu carrito está vacío o el total es $0. Vuelve a la tienda.");
+        window.location.href = 'index.html';
+        return;
+    }
 
-            // Información del cliente (se llena solo en la pasarela)
-            external: "false",
-            extra1: document.getElementById('cliente-id').value, 
-            extra2: document.getElementById('cliente-dir').value,
-
-            // URL de respuesta (donde vuelve el cliente al terminar)
-            response: window.location.href, 
-
-            // Datos de facturación tomados de tu formulario
-            name_billing: document.getElementById('cliente-nombre').value,
-            address_billing: document.getElementById('cliente-dir').value,
-            type_doc_billing: "cc",
-            mobile_phone_billing: document.getElementById('cliente-tel').value,
-            number_doc_billing: document.getElementById('cliente-id').value
+    try {
+        // 4. PREPARAMOS LOS DATOS PARA NUESTRA BASE DE DATOS (MySQL)
+        const ventaData = {
+            nombre: document.getElementById('cliente-nombre').value,
+            email: document.getElementById('cliente-email').value,
+            telefono: document.getElementById('cliente-tel').value,
+            direccion: document.getElementById('cliente-dir').value,
+            documento: document.getElementById('cliente-id').value,
+            total: totalCompra
         };
 
-        // 5. Abre el Pop-up de pago seguro
-        handler.open(data);
-    };
+        // 5. GUARDAMOS EN MYSQL (Aseguramos la venta en el servidor)
+        const response = await fetch('http://localhost:3000/api/ventas/nueva', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(ventaData)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // 6. LANZAMOS EPAYCO (Solo si MySQL ya guardó los datos)
+            const data = {
+                name: "Compra Arktech Store",
+                description: "Orden #" + result.id_venta,
+                currency: "cop",
+                amount: totalCompra.toString(),
+                tax_base: "0",
+                tax: "0",
+                country: "co",
+                lang: "es",
+                external: "false",
+                
+                // Datos del cliente para la pasarela
+                name_billing: ventaData.nombre,
+                address_billing: ventaData.direccion,
+                email_billing: ventaData.email,
+                mobile_phone_billing: ventaData.telefono,
+                number_doc_billing: ventaData.documento,
+                
+                // A dónde volver después del pago
+                response: window.location.href
+            };
+
+            handler.open(data);
+        } else {
+            alert("Error al registrar la venta en el servidor.");
+        }
+
+    } catch (error) {
+        console.error("Error en el proceso:", error);
+        alert("El servidor no responde. Asegúrate de que 'node server.js' esté corriendo.");
+    }
+};
 </script>
 </body>
 </html>
