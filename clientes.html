@@ -4,142 +4,257 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro de Cliente | Arktech Store</title>
-    <link rel="stylesheet" href="styles.css"> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        /* ESTOS ESTILOS SON PRIVADOS PARA ESTA PÁGINA Y NO DAÑARÁN EL INDEX */
+        .ark-registro-body {
+            background-color: #f4f7f6 !important;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .ark-container {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 0 15px;
+        }
+        .ark-card {
+            background: #ffffff !important;
+            padding: 35px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
+            border: 1px solid #eee;
+        }
+        .ark-title {
+            text-align: center;
+            color: #1a252f;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+        .ark-input-group {
+            margin-bottom: 18px;
+            text-align: left !important; /* Forzamos alineación izquierda */
+        }
+        .ark-input-group label {
+            display: block !important;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #444;
+            text-align: left !important;
+        }
+        .ark-input-group label i {
+            color: #20b2aa;
+            margin-right: 10px;
+            width: 20px;
+        }
+        .ark-input-group input, 
+        .ark-input-group textarea {
+            width: 100% !important;
+            padding: 12px 15px !important;
+            border: 1px solid #ccc !important;
+            border-radius: 8px !important;
+            box-sizing: border-box !important; /* Esto evita que se corra el formulario */
+            font-size: 16px;
+        }
+        .ark-form-row {
+            display: flex;
+            gap: 15px;
+        }
+        .ark-form-row .ark-input-group {
+            flex: 1;
+        }
+        .ark-btn-pago {
+            width: 100%;
+            padding: 16px;
+            background-color: #20b2aa !important;
+            border: none;
+            color: white !important;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+        .ark-btn-pago:hover {
+            background-color: #1a948e !important;
+        }
+        @media (max-width: 500px) {
+            .ark-form-row { flex-direction: column; gap: 0; }
+        }
+    </style>
 </head>
-<body>
-    <nav class="navbar" style="height: 80px;">
-        <div class="logo" onclick="location.href='index.html'">Arktech<span>Store</span></div>
-        <div class="menu">
-            <a href="index.html">Volver a la Tienda</a>
+<body class="ark-registro-body">
+
+    <nav style="height: 70px; display: flex; align-items: center; padding: 0 5%; background: #1a252f; justify-content: space-between;">
+        <div style="cursor:pointer; color: white; font-size: 22px; font-weight: bold;" onclick="location.href='index.html'">
+            Arktech<span style="color: #20b2aa;">Store</span>
         </div>
+        <a href="index.html" style="color: white; text-decoration: none; font-size: 14px;">← Volver</a>
     </nav>
 
-    <div class="container" style="max-width: 600px; margin-top: 50px;">
-        <div class="card">
-            <h2 style="text-align: center; margin-bottom: 25px; color: var(--main);">Registro de Cliente</h2>
+    <div class="ark-container">
+        <div class="ark-card">
+            <h2 class="ark-title">Finalizar Compra</h2>
             <form id="form-cliente">
-                <div class="input-group">
+                
+                <div class="ark-input-group">
                     <label><i class="fas fa-user"></i> Nombre Completo</label>
-                    <input type="text" id="cliente-nombre" placeholder="Ej: Juan Pérez" required>
+                    <input type="text" id="cliente-nombre" placeholder="Juan Pérez" required>
                 </div>
 
-                <div class="input-group">
+                <div class="ark-input-group">
                     <label><i class="fas fa-id-card"></i> Identificación (Cédula/NIT)</label>
                     <input type="text" id="cliente-id" placeholder="Número de documento" required>
                 </div>
 
-                <div class="form-row">
-                    <div class="input-group">
+                <div class="ark-form-row">
+                    <div class="ark-input-group">
                         <label><i class="fas fa-phone"></i> Teléfono</label>
                         <input type="tel" id="cliente-tel" placeholder="300 000 0000" required>
                     </div>
-                    <div class="input-group">
+                    <div class="ark-input-group">
                         <label><i class="fas fa-envelope"></i> Correo Electrónico</label>
                         <input type="email" id="cliente-email" placeholder="correo@ejemplo.com" required>
                     </div>
                 </div>
 
-                <div class="input-group">
+                <div class="ark-input-group">
                     <label><i class="fas fa-map-marker-alt"></i> Dirección de Entrega</label>
-                    <input type="text" id="cliente-dir" placeholder="Calle, Carrera, Barrio y Ciudad" required>
+                    <input type="text" id="cliente-dir" placeholder="Calle, Carrera, Barrio..." required>
                 </div>
 
-                <div class="input-group">
-                    <label><i class="fas fa-comment-dots"></i> Notas Adicionales (Opcional)</label>
-                    <textarea id="cliente-notas" rows="3" placeholder="Indicaciones para el repartidor..."></textarea>
+                <div class="ark-input-group">
+                    <label><i class="fas fa-comment-dots"></i> Notas (Opcional)</label>
+                    <textarea id="cliente-notas" rows="2" placeholder="Indicaciones para el repartidor..."></textarea>
                 </div>
 
-                <button type="submit" class="btn-primary" style="margin-top: 20px;">
-                    CONFIRMAR DATOS Y PAGAR <i class="fas fa-arrow-right"></i>
+                <button type="submit" class="ark-btn-pago">
+                    CONFIRMAR Y PAGAR <i class="fas fa-lock" style="margin-left:10px;"></i>
                 </button>
             </form>
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script type="text/javascript" src="https://checkout.epayco.co/checkout.js"></script>
+</body>
+</html>
 
 <script>
-    // Dentro del <script> de clientes.html, al puro principio:
+// 1. Recuperamos los datos del almacenamiento local
 const totalCompra = localStorage.getItem('total_compra');
+const carritoParaStock = JSON.parse(localStorage.getItem('carrito')) || [];
 
-if (!totalCompra || totalCompra == 0) {
-    alert("No detectamos un total de compra. Regresando a la tienda...");
+// Validación inicial: Si no hay nada, no lo dejamos estar aquí
+if (!totalCompra || parseFloat(totalCompra) === 0 || carritoParaStock.length === 0) {
+    alert("El carrito está vacío. Regresando a la tienda...");
     window.location.href = 'index.html';
-} else {
-    console.log("Total cargado para pagar: $" + totalCompra);
 }
-// 1. Configuración de ePayco
+
+// 2. Configuración de ePayco
 const handler = ePayco.checkout.configure({
     key: 'bdb149b838ad1858a72a78d226081ace53cde4f5', 
-    test: true
+    test: true 
 });
 
 document.getElementById('form-cliente').onsubmit = async function(e) {
     e.preventDefault();
 
-    // 2. RECUPERAMOS EL TOTAL REAL (Lo que guardamos en localStorage en index.html)
-    // Si por alguna razón no existe, usamos 0 para evitar que el código se rompa.
-    const totalCompra = localStorage.getItem('total_compra') || 0;
-
-    // 3. VALIDACIÓN: Si el total es 0, no dejamos seguir.
-    if (parseFloat(totalCompra) <= 0) {
-        alert("Error: Tu carrito está vacío o el total es $0. Vuelve a la tienda.");
-        window.location.href = 'index.html';
-        return;
-    }
+    const totalActual = parseFloat(localStorage.getItem('total_compra')) || 0;
 
     try {
-        // 4. PREPARAMOS LOS DATOS PARA NUESTRA BASE DE DATOS (MySQL)
-        const ventaData = {
-            nombre: document.getElementById('cliente-nombre').value,
-            email: document.getElementById('cliente-email').value,
+        // 1. Preparamos los datos para el servidor
+        const pedidoData = {
+            nombre_cliente: document.getElementById('cliente-nombre').value,
             telefono: document.getElementById('cliente-tel').value,
             direccion: document.getElementById('cliente-dir').value,
+            email: document.getElementById('cliente-email').value,
             documento: document.getElementById('cliente-id').value,
-            total: totalCompra
+            total: totalActual,
+            carrito: carritoParaStock
         };
 
-        // 5. GUARDAMOS EN MYSQL (Aseguramos la venta en el servidor)
-        const response = await fetch('http://localhost:3000/api/ventas/nueva', {
+        // 2. Registro en servidor y descuento de stock
+        const response = await fetch('http://localhost:3000/api/crear-pedido', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(ventaData)
+            body: JSON.stringify(pedidoData)
         });
 
         const result = await response.json();
 
         if (result.success) {
-            // 6. LANZAMOS EPAYCO (Solo si MySQL ya guardó los datos)
-            const data = {
-                name: "Compra Arktech Store",
-                description: "Orden #" + result.id_venta,
-                currency: "cop",
-                amount: totalCompra.toString(),
-                tax_base: "0",
-                tax: "0",
-                country: "co",
-                lang: "es",
-                external: "false",
-                
-                // Datos del cliente para la pasarela
-                name_billing: ventaData.nombre,
-                address_billing: ventaData.direccion,
-                email_billing: ventaData.email,
-                mobile_phone_billing: ventaData.telefono,
-                number_doc_billing: ventaData.documento,
-                
-                // A dónde volver después del pago
-                response: window.location.href
-            };
+            // --- MODAL PROPIO DEL APP CON SWEETALERT2 ---
+            Swal.fire({
+                title: '¿Confirmar Pedido?',
+                html: `
+                    <div style="text-align: left; font-size: 0.95em; line-height: 1.6;">
+                        <p><strong>Orden:</strong> ${result.orden}</p>
+                        <p><strong>Cliente:</strong> ${pedidoData.nombre_cliente}</p>
+                        <p><strong>Total a pagar:</strong> <span style="color: #20b2aa; font-weight: bold;">$${totalActual.toLocaleString()}</span></p>
+                        <hr>
+                        <p style="font-size: 0.85em; color: #666;">Al confirmar, serás redirigido a la pasarela de pago segura ePayco.</p>
+                    </div>
+                `,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#20b2aa', // Color aguamarina
+                cancelButtonColor: '#757575',
+                confirmButtonText: 'Sí, ir a pagar',
+                cancelButtonText: 'Revisar datos',
+                background: '#ffffff',
+                backdrop: `rgba(0,0,0,0.4)`
+            }).then((sweetResult) => {
+                if (sweetResult.isConfirmed) {
+                    // 3. SI EL USUARIO ACEPTA: CONFIGURAMOS EPAYCO
+                    const dataEPayco = {
+                        name: "Compra Arktech Store",
+                        description: "Orden #" + result.orden,
+                        currency: "cop",
+                        amount: totalActual.toString(),
+                        tax_base: "0",
+                        tax: "0",
+                        country: "co",
+                        lang: "es",
+                        external: "false",
+                        
+                        name_billing: pedidoData.nombre_cliente,
+                        address_billing: pedidoData.direccion,
+                        email_billing: pedidoData.email,
+                        mobile_phone_billing: pedidoData.telefono,
+                        number_doc_billing: pedidoData.documento,
+                        
+                        invoice: result.orden, 
+                        response: window.location.href 
+                    };
 
-            handler.open(data);
+                    // Limpieza del carrito local
+                    localStorage.removeItem('carrito');
+                    localStorage.removeItem('total_compra');
+
+                    // Abrir pasarela
+                    handler.open(dataEPayco);
+                } else {
+                    // Si cancela, mostramos un aviso sutil
+                    Swal.fire({
+                        title: 'Pedido en espera',
+                        text: `Tu orden ${result.orden} ha sido reservada. Puedes finalizar el pago cuando estés listo.`,
+                        icon: 'info',
+                        confirmButtonColor: '#20b2aa'
+                    });
+                }
+            });
+
         } else {
-            alert("Error al registrar la venta en el servidor.");
+            Swal.fire('Error', 'No pudimos procesar tu pedido: ' + result.error, 'error');
         }
 
     } catch (error) {
         console.error("Error en el proceso:", error);
-        alert("El servidor no responde. Asegúrate de que 'node server.js' esté corriendo.");
+        Swal.fire('Error de Conexión', 'No se pudo establecer contacto con el servidor de Arktech.', 'error');
     }
 };
 </script>
