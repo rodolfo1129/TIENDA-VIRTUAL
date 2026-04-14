@@ -2,12 +2,16 @@ require('dotenv').config();
 const express = require('express');
 const mysql = require('mysql2');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 1. CONFIGURACIÓN DEL POOL (Asegúrate de que los datos coincidan con tu MySQL)
+// --- 1. SERVIR ARCHIVOS ESTÁTICOS ---
+app.use(express.static(__dirname));
+
+// --- 2. CONFIGURACIÓN DEL POOL ---
 const db = mysql.createPool({
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
@@ -17,7 +21,9 @@ const db = mysql.createPool({
     connectionLimit: 10
 });
 
-// --- RUTA 1: OBTENER PRODUCTOS ---
+const dbPromise = db.promise();
+
+// --- RUTA: OBTENER PRODUCTOS ---
 app.get('/api/productos', (req, res) => {
     const query = 'SELECT * FROM Productos ORDER BY id_producto DESC';
     db.query(query, (err, results) => {
@@ -26,7 +32,7 @@ app.get('/api/productos', (req, res) => {
     });
 });
 
-// --- RUTA 2: GUARDAR PRODUCTO NUEVO ---
+// --- RUTA: GUARDAR PRODUCTO NUEVO ---
 app.post('/api/productos/nuevo', (req, res) => {
     const { nombre, descripcion, precio, stock, imagen_url, categoria } = req.body;
     const query = `INSERT INTO Productos (nombre, descripcion, precio, stock_actual, imagen_url, categoria) VALUES (?, ?, ?, ?, ?, ?)`;
@@ -36,58 +42,116 @@ app.post('/api/productos/nuevo', (req, res) => {
     });
 });
 
-// --- RUTA 3: GUARDAR EN CARRITO (CORREGIDA) ---
-app.post('/api/carrito/guardar', (req, res) => {
-    const { session_id, id_producto, cantidad } = req.body;
-    if (!session_id || !id_producto) {
-        return res.status(400).json({ error: "Faltan datos (session_id o id_producto)" });
-    }
-    const query = `
-        INSERT INTO Carrito (session_id, id_producto, cantidad) 
-        VALUES (?, ?, ?) 
-        ON DUPLICATE KEY UPDATE cantidad = cantidad + VALUES(cantidad)`;
-
-    db.query(query, [session_id, id_producto, cantidad || 1], (err, result) => {
-        if (err) {
-            console.error("❌ Error en Carrito:", err.sqlMessage);
-            return res.status(500).json({ error: err.sqlMessage });
-        }
-        res.json({ success: true, message: "Añadido al carrito en BD" });
+// --- RUTA: OBTENER CATEGORIAS ---
+app.get('/api/obtener-categorias', (req, res) => {
+    db.query("SELECT * FROM categorias", (err, results) => {
+        if (err) return res.status(500).send(err.message);
+        res.json(results);
     });
 });
 
-app.post('/api/ventas/nueva', (req, res) => {
-    // Extraemos los datos. ¡Ojo que los nombres coincidan con 'ventaData' de arriba!
-    const { nombre, documento, email, telefono, direccion, total } = req.body;
+// --- RUTA MAESTRA: CREAR PEDIDO Y DESCONTAR STOCK ---
+app.post('/api/crear-pedido', async (req, res) => {
+    const { nombre_cliente, telefono, direccion, email, documento, carrito, total } = req.body;
 
-    console.log("Dato recibido - Documento:", documento); // Esto saldrá en tu consola negra
+    // --- ESTA LÍNEA ES LA QUE FALTA EN TU TROZO ---
+    // Asegura que si llega un error desde el navegador, el server lo convierta a 0 o al número real
+    const totalNumerico = parseFloat(total) || 0;
 
-    if (!documento) {
-        return res.status(400).json({ success: false, error: "El documento es obligatorio" });
+    if (!carrito || !Array.isArray(carrito)) {
+        return res.status(400).json({ success: false, error: "El carrito está vacío o mal formado" });
     }
 
-    // 1. Guardar Cliente
-    const sqlCliente = `INSERT INTO clientes (nombre, documento, email, telefono, direccion) 
-                        VALUES (?, ?, ?, ?, ?) 
-                        ON DUPLICATE KEY UPDATE nombre=VALUES(nombre)`;
+    const connection = await dbPromise.getConnection();
 
-    db.query(sqlCliente, [nombre, documento, email, telefono, direccion], (err, result) => {
-        if (err) {
-            console.error("❌ Error en SQL Cliente:", err.message);
-            return res.status(500).json({ success: false, error: err.message });
+    try {
+        await connection.beginTransaction();
+
+        // 1. Guardar o actualizar cliente
+        const sqlCliente = `INSERT INTO clientes (nombre, documento, email, telefono, direccion) 
+                            VALUES (?, ?, ?, ?, ?) 
+                            ON DUPLICATE KEY UPDATE 
+                            nombre=VALUES(nombre), 
+                            telefono=VALUES(telefono), 
+                            direccion=VALUES(direccion),
+                            email=VALUES(email)`;
+        await connection.query(sqlCliente, [nombre_cliente, documento, email, telefono, direccion]);
+
+        // 2. Insertar el pedido (Cambiamos 'total' por 'totalNumerico')
+        const [resPedido] = await connection.query(
+            "INSERT INTO pedidos (nombre_cliente, documento_cliente, total) VALUES (?, ?, ?)",
+            [nombre_cliente, documento, totalNumerico]
+        );
+
+        const idPedidoGenerado = resPedido.insertId;
+        const codigoUnico = `ARK-${1000 + idPedidoGenerado}`;
+
+        // 3. Asignar código ARK
+        await connection.query(
+            "UPDATE pedidos SET codigo_pedido = ? WHERE id_pedido = ?",
+            [codigoUnico, idPedidoGenerado]
+        );
+        
+        // ... (el resto del código para descontar stock y hacer commit)
+
+        // 4. DESCONTAR STOCK AUTOMÁTICAMENTE
+        for (const item of carrito) {
+            await connection.query(
+                "UPDATE productos SET stock_actual = stock_actual - ? WHERE id_producto = ?",
+                [item.cantidad, item.id_producto]
+            );
         }
 
-        // 2. Guardar Venta
-        const sqlVenta = `INSERT INTO ventas (nombre_cliente, documento_cliente, total) VALUES (?, ?, ?)`;
-        db.query(sqlVenta, [nombre, documento, total], (errV, resV) => {
-            if (errV) return res.status(500).json({ success: false, error: errV.message });
-            
-            res.json({ success: true, id_venta: resV.insertId });
+        await connection.commit();
+        res.json({ success: true, orden: codigoUnico, id_venta: idPedidoGenerado });
+
+    } catch (error) {
+        await connection.rollback();
+        console.error("❌ ERROR EN TRANSACCIÓN:", error);
+        res.status(500).json({ success: false, error: error.message });
+    } finally {
+        connection.release();
+    }
+});
+
+// --- RUTA: OBTENER TODOS LOS PEDIDOS PARA EL ADMINISTRADOR ---
+app.get('/api/admin/pedidos', async (req, res) => {
+    try {
+        // El JOIN es la forma correcta de unir tablas sin duplicar datos
+        const query = `
+            SELECT 
+                p.id_pedido, 
+                p.codigo_pedido, 
+                p.fecha, 
+                p.total, 
+                p.estado, 
+                c.nombre AS nombre_cliente, 
+                c.telefono, 
+                c.email, 
+                c.direccion 
+            FROM pedidos p 
+            INNER JOIN clientes c ON p.documento_cliente = c.documento 
+            ORDER BY p.fecha DESC
+        `;
+
+        // Usamos dbPromise que es el que tienes configurado para async/await
+        const [results] = await dbPromise.query(query);
+        
+        res.json(results);
+    } catch (error) {
+        console.error("Error en la ruta admin/pedidos:", error);
+        res.status(500).json({ 
+            success: false, 
+            message: "No se pudieron obtener los pedidos",
+            error: error.message 
         });
-    });
+    }
 });
 
+// --- LANZAMIENTO ---
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`🚀 Servidor listo en http://localhost:${PORT}`);
+    console.log(`\n🚀 Arktech Store en línea!`);
+    console.log(`📡 Servidor: http://localhost:${PORT}`);
+    console.log(`📂 Archivos servidos desde: ${__dirname}\n`);
 });
