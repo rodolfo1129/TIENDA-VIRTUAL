@@ -6,74 +6,64 @@
     <title>Arktech Store | Tienda Virtual</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        /* Estilos específicos para que el registro no se mueva */
+        .ark-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin: 20px auto; max-width: 600px; }
+        .ark-input-group { margin-bottom: 15px; text-align: left; }
+        .ark-input-group label { display: block; font-weight: bold; margin-bottom: 5px; color: #333; }
+        .ark-input-group input, .ark-input-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .ark-form-row { display: flex; gap: 15px; }
+        .ark-form-row .ark-input-group { flex: 1; }
+    </style>
 </head>
 <body>
-      <div id="sidebar" class="sidebar">
-    <div class="sidebar-header">
-        <h3>Nuestros Servicios</h3>
-        <button onclick="toggleSidebar()" class="close-btn">&times;</button>
-    </div>
-    <div class="sidebar-content">
-        <a href="#"><i class="fas fa-tools"></i> Soporte Técnico</a>
-        <a href="#"><i class="fas fa-shield-alt"></i> Garantías</a>
-        <a href="#"><i class="fas fa-truck"></i> Rastreo de Envío</a>
-        <div class="sidebar-divider"></div>
-        <a href="https://wa.me/tu_numero" target="_blank" class="wa-link">
-            <i class="fab fa-whatsapp"></i> WhatsApp Ventas
-        </a>
-        <a href="#"><i class="fas fa-headset"></i> Centro de Ayuda</a>
-    </div>
-</div>
-   <nav class="navbar" style="height: 100px; padding: 0 5%;">
-    <div style="display: flex; align-items: center; gap: 15px;">
-        <button onclick="toggleSidebar()" style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;">
-            <i class="fas fa-bars"></i>
-        </button>
-        <div class="logo" onclick="navegar('tienda')">Arktech<span>Store</span></div>
-    </div>
-        
-    <div class="nav-center">
-        <h1 class="nav-title">Nuestros Productos</h1>
-        <div class="search-navbar">
-            <input type="text" id="input-busqueda" placeholder="🔍 Buscar producto..." onkeyup="filtrarProductos()">
+
+    <div id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+            <h3>Menú Arktech</h3>
+            <button onclick="toggleSidebar()" class="close-btn">&times;</button>
         </div>
-    </div>
-
-    <div class="menu">
-        <a onclick="navegar('tienda')">Catálogo</a>
-        <a onclick="navegar('admin')">Administrador</a>
-        <div class="cart-icon" onclick="navegar('carrito')">
-            <i class="fas fa-shopping-bag"></i>
-            <span id="cart-count">0</span>
-        </div>
-    </div>
-</nav>
-
-<section id="vista-tienda" class="container">
-    <div id="grid-productos" class="grid-layout" style="margin-top: 20px;"></div>
-</section>
-
-    <section id="vista-detalle" class="container" style="display:none;">
-        <div class="detail-layout card">
-            <div class="detalle-superior">
-                <div class="galeria-ver-2">
-                    <img id="main-img" src="" alt="Producto">
-                    <div id="thumb-container" class="thumbs"></div>
-                </div>
-                <div class="info-ver-2">
-                    <button class="btn-back-ver-2" onclick="navegar('tienda')">← Volver al catálogo</button>
-                    <h2 id="det-name"></h2>
-                    <p id="det-price" class="price-tag-ver-2"></p>
-                    <div class="separador-ver-2"></div>
-                    <button id="add-to-cart-btn-det" class="btn-primary">AGREGAR AL CARRITO</button>
+        <div class="sidebar-content">
+            <div class="admin-accordion">
+                <button class="accordion-btn" onclick="toggleAccordion('admin-menu')">
+                    <i class="fas fa-user-shield"></i> Administración <i class="fas fa-chevron-down arrow"></i>
+                </button>
+                <div id="admin-menu" class="accordion-content">
+                    <a href="#" onclick="navegar('admin')"><i class="fas fa-boxes"></i> Inventario / Carga</a>
+                    <a href="#" onclick="navegar('pedidos'); cargarPedidosAdmin();"><i class="fas fa-clipboard-list"></i> Ver Pedidos</a>
                 </div>
             </div>
-            <div class="detalle-inferior">
-                <div class="separador-ver-2"></div>
-                <h3>Descripción Técnica</h3>
-                <p id="det-desc" class="desc-text-ver-2"></p>
+            <div class="sidebar-divider"></div>
+            <a href="#" onclick="navegar('tienda')"><i class="fas fa-store"></i> Ir a la Tienda</a>
+            <a href="#"><i class="fas fa-tools"></i> Soporte Técnico</a>
+            <div class="sidebar-divider"></div>
+            <a href="https://wa.me/tu_numero" target="_blank" class="wa-link"><i class="fab fa-whatsapp"></i> WhatsApp Ventas</a>
+        </div>
+    </div>
+
+    <nav class="navbar" style="height: 100px; padding: 0 5%; display: flex; align-items: center; justify-content: space-between; background-color: #1a252f; color: white;">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <button onclick="toggleSidebar()" style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;"><i class="fas fa-bars"></i></button>
+            <div class="logo" onclick="navegar('tienda')" style="cursor:pointer; font-size: 24px; font-weight: bold;">
+                Arktech<span style="color: #20b2aa;">Store</span>
             </div>
         </div>
+        <div class="nav-center" style="flex-grow: 1; max-width: 500px; margin: 0 20px;">
+            <input type="text" id="input-busqueda" placeholder="Buscar producto..." onkeyup="filtrarProductos()" style="width: 100%; padding: 10px 15px; border-radius: 20px; border: none;">
+        </div>
+        <div class="menu" style="display: flex; align-items: center; gap: 20px;">
+            <a onclick="navegar('tienda')" style="cursor:pointer;">Catálogo</a>
+            <div class="cart-icon" onclick="navegar('carrito')" style="position: relative; cursor: pointer; font-size: 1.2rem;">
+                <i class="fas fa-shopping-bag"></i>
+                <span id="cart-count" style="position: absolute; top: -10px; right: -10px; background: #20b2aa; color: white; border-radius: 50%; padding: 2px 6px; font-size: 12px;">0</span>
+            </div>
+        </div>
+    </nav>
+
+    <section id="vista-tienda" class="container">
+        <h1 style="text-align: center; margin-top: 20px;">Nuestros Productos</h1>
+        <div id="grid-productos" class="grid-layout" style="margin-top: 20px;"></div>
     </section>
 
     <section id="vista-admin" class="container" style="display:none;">
@@ -82,49 +72,50 @@
                 <h2 id="form-title">Gestión de Inventario</h2>
                 <form id="product-form">
                     <input type="hidden" id="edit-id">
-                    <div class="input-group">
-                        <label>Nombre del Producto</label>
-                        <input type="text" id="name" placeholder="Ej: Portátil Asus Zenbook" required>
-                    </div>
+                    <div class="input-group"><label>Nombre del Producto</label><input type="text" id="name" required></div>
                     <div class="form-row">
-                        <div class="input-group">
-                            <label>Precio ($)</label>
-                            <input type="number" id="price" placeholder="0" required>
-                        </div>
-                        <div class="input-group">
-                            <label>Stock</label>
-                            <input type="number" id="stock" placeholder="Uds" required>
-                        </div>
+                        <div class="input-group"><label>Precio ($)</label><input type="number" id="price" required></div>
+                        <div class="input-group"><label>Stock</label><input type="number" id="stock" required></div>
                     </div>
-                    <div class="input-group">
-                        <label>Descripción</label>
-                        <textarea id="desc" rows="4" placeholder="Detalles del equipo..." required></textarea>
-                    </div>
+                    <label>Categoría:</label>
+                    <select id="id_categorias" name="id_categorias" class="input-field" style="width: 100%; margin-bottom: 15px; padding: 10px;"></select>
+                    <div class="input-group"><label>Descripción</label><textarea id="desc" rows="4" required></textarea></div>
                     <div class="upload-area">
-                        <label for="file-input" class="drop-zone">
-                            <i class="fas fa-camera"></i>
-                            <span>Selecciona mín. 3 fotos (Usa CTRL)</span>
-                        </label>
+                        <label for="file-input" class="drop-zone"><i class="fas fa-camera"></i> <span>Mín. 3 fotos</span></label>
                         <input type="file" id="file-input" multiple accept="image/*">
                         <div id="file-previews" class="preview-strip"></div>
                     </div>
                     <button type="submit" id="save-btn" class="btn-primary">GUARDAR PRODUCTO</button>
-                    <button type="button" id="cancel-btn" class="btn-outline" style="display:none" onclick="resetForm()">CANCELAR</button>
+                    <button type="button" onclick="resetForm()" class="btn-outline">CANCELAR</button>
                 </form>
             </div>
             <div class="list-card card">
                 <h2>Productos en Stock</h2>
                 <table class="modern-table">
-                    <thead>
-                        <tr>
-                            <th>REF</th>
-                            <th>PRODUCTO</th>
-                            <th>STOCK</th>
-                            <th>ACCIONES</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th>REF</th><th>PRODUCTO</th><th>STOCK</th><th>ACCIONES</th></tr></thead>
                     <tbody id="inventory-list"></tbody>
                 </table>
+            </div>
+        </div>
+    </section>
+
+    <section id="vista-detalle" class="container" style="display:none;">
+        <div class="detail-layout card">
+            <div class="detalle-superior">
+                <div class="galeria-ver-2">
+                    <img id="main-img" src="" alt="Producto" style="max-width: 100%;">
+                    <div id="thumb-container" class="thumbs"></div>
+                </div>
+                <div class="info-ver-2">
+                    <button class="btn-back-ver-2" onclick="navegar('tienda')">← Volver al catálogo</button>
+                    <h2 id="det-name"></h2>
+                    <p id="det-price" class="price-tag-ver-2"></p>
+                    <button id="add-to-cart-btn-det" class="btn-primary">AGREGAR AL CARRITO</button>
+                </div>
+            </div>
+            <div class="detalle-inferior">
+                <h3>Descripción Técnica</h3>
+                <p id="det-desc" class="desc-text-ver-2"></p>
             </div>
         </div>
     </section>
@@ -132,25 +123,51 @@
     <section id="vista-carrito" class="container" style="display:none;">
         <div class="card">
             <h2>Tu Carrito</h2>
-            <div class="separador-ver-2"></div>
             <table class="modern-table">
                 <thead>
-                    <tr>
-                        <th>Imagen</th>
-                        <th>Producto</th>
-                        <th>Cant.</th>
-                        <th>Subtotal</th>
-                        <th>Acción</th>
-                    </tr>
+                    <tr><th>Imagen</th><th>Producto</th><th>Cant.</th><th>Subtotal</th><th>Acción</th></tr>
                 </thead>
                 <tbody id="cart-items-list"></tbody>
             </table>
-            <div class="cart-footer">
+            <div class="cart-footer" style="text-align: right; margin-top: 20px;">
                 <h3 id="txt-total-carrito">Total: $0</h3>
                 <button type="button" class="btn-primary" onclick="prepararEnvioYSalir()">Finalizar Compra</button>
-           </div>
-       </section>
+            </div>
+        </div>
+    </section>
 
+    <section id="section-pedidos" class="container" style="display:none; padding-top: 20px;">
+        <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #20b2aa; padding-bottom: 10px; margin-bottom: 20px;">
+                <h2 style="color: #333; margin: 0;">Gestión de Pedidos Recibidos</h2>
+                <button onclick="cargarPedidosAdmin()" style="background: #20b2aa; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;"><i class="fas fa-sync-alt"></i> Actualizar</button>
+            </div>
+            <div style="overflow-x: auto;">
+                <table class="modern-table">
+                    <thead><tr><th>Orden</th><th>Cliente</th><th>Fecha</th><th>Total</th><th>Estado</th><th>Acciones</th></tr></thead>
+                    <tbody id="tabla-pedidos-admin"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section id="vista-registro-cliente" class="container" style="display:none;">
+        <div class="ark-card">
+            <h2 style="text-align: center; color: #1a252f;">Datos para el Envío</h2>
+            <form id="form-cliente">
+                <div class="ark-input-group"><label>Nombre Completo</label><input type="text" id="cliente-nombre" required></div>
+                <div class="ark-input-group"><label>Identificación</label><input type="text" id="cliente-id" required></div>
+                <div class="ark-form-row">
+                    <div class="ark-input-group"><label>Teléfono</label><input type="tel" id="cliente-tel" required></div>
+                    <div class="ark-input-group"><label>Email</label><input type="email" id="cliente-email" required></div>
+                </div>
+                <div class="ark-input-group"><label>Dirección de Entrega</label><input type="text" id="cliente-dir" required></div>
+                <button type="submit" class="btn-primary" style="width:100%">CONFIRMAR COMPRA</button>
+            </form>
+        </div>
+    </section>
+
+    <script src="https://checkout.epayco.co/checkout.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
