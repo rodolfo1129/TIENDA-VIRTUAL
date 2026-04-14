@@ -372,3 +372,161 @@ function toggleSidebar() {
         side.style.width = '250px';
     }
 }
+async function rellenarComboCategorias() {
+    try {
+        const respuesta = await fetch('http://localhost:3000/api/obtener-categorias');
+        const listaCategorias = await respuesta.json();
+        
+        const combo = document.getElementById('id_categorias');
+        
+        if (combo) {
+            // Limpiamos el "Cargando..." y dejamos una opción inicial
+            combo.innerHTML = '<option value="">Seleccione una categoría</option>';
+            
+            // Recorremos los datos usando tus nombres de campo
+            listaCategorias.forEach(cat => {
+                const opcion = document.createElement('option');
+                opcion.value = cat.id_categorias;        // ID de la base de datos
+                opcion.textContent = cat.nombre_categorias; // Nombre visible
+                combo.appendChild(opcion);
+            });
+            console.log("Categorías cargadas correctamente.");
+        }
+    } catch (error) {
+        console.error("No se pudieron cargar las categorías:", error);
+    }
+}
+
+async function cargarComboCategorias() {
+    try {
+        const respuesta = await fetch('http://localhost:3000/api/obtener-categorias');
+        const categorias = await respuesta.json();
+        
+        const combo = document.getElementById('id_categorias');
+        
+        if (combo) {
+            // Dejamos el combo limpio con la opción por defecto
+            combo.innerHTML = '<option value="">Seleccione una categoría</option>';
+            
+            // Insertamos cada categoría de la base de datos
+            categorias.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat.id_categorias;        // El ID
+                opt.textContent = cat.nombre_categorias; // El Nombre
+                combo.appendChild(opt);
+            });
+            console.log("✅ Combo de categorías cargado");
+        }
+    } catch (error) {
+        console.error("❌ Error al cargar combo:", error);
+    }
+}
+
+async function cargarCombo() {
+    try {
+        const res = await fetch('http://localhost:3000/api/obtener-categorias');
+        const data = await res.json();
+        const select = document.getElementById('id_categorias');
+
+        if (!select) return;
+
+        select.innerHTML = '<option value="">Seleccione una categoría</option>';
+
+        data.forEach(fila => {
+            // Esto es lo más importante: no busca nombres, busca posición
+            const columnas = Object.values(fila); 
+            const opt = document.createElement('option');
+            opt.value = columnas[0];    // El primer dato que encuentre
+            opt.textContent = columnas[1]; // El segundo dato
+            select.appendChild(opt);
+        });
+    } catch (err) {
+        console.error("Error:", err);
+    }
+}
+
+// BIEN (Esto te lleva a tu página de registro de cliente)
+function prepararEnvioYSalir() {
+    if (cart.length === 0) {
+        alert("El carrito está vacío.");
+        return;
+    }
+
+    const total = cart.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
+
+    // Guardamos los datos para que el formulario de cliente los use
+    localStorage.setItem('total_compra', total);
+    localStorage.setItem('carrito', JSON.stringify(cart));
+
+    // Si tu archivo de registro se llama clientes.html:
+    window.location.href = 'clientes.html'; 
+    
+    // O si el formulario está en el mismo index.html como una sección:
+    // navegar('cliente'); 
+}
+
+// Función para abrir/cerrar el acordeón
+function toggleAccordion(id) {
+    const content = document.getElementById(id);
+    const arrow = event.currentTarget.querySelector('.arrow');
+    
+    if (content.style.maxHeight) {
+        content.style.maxHeight = null;
+        arrow.classList.remove('rotate');
+    } else {
+        content.style.maxHeight = content.scrollHeight + "px";
+        arrow.classList.add('rotate');
+    }
+}
+
+// Función para cambiar entre secciones (Tienda vs Pedidos)
+function mostrarSeccion(id) {
+    // Ocultamos todas las secciones principales
+    document.getElementById('section-pedidos').style.display = 'none';
+    if(document.getElementById('contenedor-productos')) {
+        document.getElementById('contenedor-productos').style.display = 'none';
+    }
+    
+    // Mostramos la elegida
+    document.getElementById('section-' + id).style.display = 'block';
+    toggleSidebar(); // Cerramos el sidebar al elegir una opción
+}
+
+// Carga de pedidos desde el servidor
+async function cargarPedidosAdmin() {
+    try {
+        const response = await fetch('http://localhost:3000/api/admin/pedidos');
+        const pedidos = await response.json();
+        const tbody = document.getElementById('tabla-pedidos-admin');
+        tbody.innerHTML = '';
+
+        pedidos.forEach(p => {
+            const fecha = new Date(p.fecha).toLocaleDateString();
+            tbody.innerHTML += `
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 12px;"><strong>${p.codigo_pedido}</strong></td>
+                    <td style="padding: 12px;">${p.nombre_cliente}<br><small>${p.telefono}</small></td>
+                    <td style="padding: 12px;">${fecha}</td>
+                    <td style="padding: 12px;">$${parseFloat(p.total).toLocaleString()}</td>
+                    <td style="padding: 12px;">
+                        <span class="badge-${p.estado === 'Completado' ? 'success' : 'warning'}">${p.estado}</span>
+                    </td>
+                    <td style="padding: 12px;">
+                        <button onclick="generarDocumento('${p.codigo_pedido}')" style="background: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">
+                            <i class="fas fa-print"></i> Orden
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+    } catch (error) {
+        console.error("Error:", error);
+    }
+}
+// Ejecutar al cargar
+window.addEventListener('DOMContentLoaded', cargarCombo);
+
+window.onload = () => {
+    renderTienda(); // La función que ya tenías
+    cargarComboCategorias(); // <--- Agregamos esta
+};
