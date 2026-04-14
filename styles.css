@@ -177,3 +177,166 @@ input, textarea { width: 100%; padding: 12px; border: 2px solid var(--border); b
     color: #25d366 !important; /* Color oficial de WhatsApp */
     font-weight: bold;
 }
+
+/* Estilo para el combo de categorías en tonos claros */
+#id_categorias {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    background-color: #ffffff; /* Fondo blanco */
+    color: #333333;            /* Texto gris oscuro/negro */
+    border: 2px solid #e0e0e0; /* Borde gris claro */
+    border-radius: 6px;        /* Bordes redondeados */
+    font-size: 16px;
+    font-family: 'Segoe UI', sans-serif;
+    outline: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+/* Efecto al pasar el mouse */
+#id_categorias:hover {
+    border-color: #cccccc;
+}
+
+/* Efecto cuando el usuario hace clic (Foco) */
+#id_categorias:focus {
+    border-color: #00fbff;     /* Mantenemos tu color aquamarina en el borde */
+    box-shadow: 0 0 5px rgba(0, 251, 255, 0.3);
+    background-color: #fafafa;
+}
+
+/* Estilo de las opciones */
+#id_categorias option {
+    background-color: #ffffff;
+    color: #333333;
+    padding: 10px;
+}
+
+/* Aplicar a los inputs y al combo de forma individual para asegurar el efecto */
+
+#product-name, 
+#product-price, 
+#id_categorias {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    background-color: #ffffff;
+    color: #333333;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 16px;
+    outline: none;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+/* AQUÍ ESTÁ EL REBORDE AZUL PARA TODOS */
+#product-name:focus, 
+#product-price:focus, 
+#id_categorias:focus {
+    border: 2px solid #00fbff !important; /* Forzamos el color aquamarina */
+    box-shadow: 0 0 8px rgba(0, 251, 255, 0.4);
+    background-color: #f0fdff;
+}
+
+/* SOLO ESTILO DEL COMBO */
+#id_categorias {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    background-color: #ffffff;
+    color: #333;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+#id_categorias:focus {
+    border-color: #00fbff;
+    box-shadow: 0 0 8px rgba(0, 251, 255, 0.4);
+}
+
+/* --- ESTILO CORRECTO PARA LA 'X' ROJA SUPERPUESTA --- */
+
+/* 1. Contenedor de CADA imagen (muy importante el 'relative') */
+#file-previews .preview-container {
+    position: relative !important; /* Punto de referencia para la 'X' */
+    display: inline-block;
+    margin: 15px 10px; /* Margen para que no se peguen las fotos ni la 'X' */
+    width: 100px; /* Tamaño de la miniatura */
+    height: 100px; /* Tamaño de la miniatura */
+    vertical-align: top;
+}
+
+/* 2. La imagen miniatura en sí */
+#file-previews .preview-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Recorta la imagen para que encaje sin deformarse */
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+
+/* Estilos para el Acordeón en Sidebar */
+.accordion-btn {
+    width: 100%;
+    background: none;
+    border: none;
+    color: white;
+    text-align: left;
+    padding: 12px 15px;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: 0.3s;
+}
+
+.accordion-btn:hover { background: rgba(255,255,255,0.1); }
+
+.accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+    background: rgba(0,0,0,0.2);
+}
+
+.accordion-content a {
+    padding-left: 30px !important;
+    font-size: 0.9rem !important;
+}
+
+.arrow { transition: transform 0.3s; }
+.rotate { transform: rotate(180deg); }
+
+.badge-success { background: #28a745; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; }
+.badge-warning { background: #ffc107; color: #333; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; }
+
+body {
+    background-color: #f0f2f5; /* Un gris muy clarito para que resalten las cards blancas */
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+.main-content-section {
+    padding: 20px;
+}
+
+/* Esto arregla el error del shadow que te marcó el editor */
+.card, .producto-card {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1); /* AQUÍ ESTÁ EL BOX-SHADOW CORRECTO */
+    transition: transform 0.3s;
+}
+
+.producto-card:hover {
+    transform: translateY(-5px);
+}
