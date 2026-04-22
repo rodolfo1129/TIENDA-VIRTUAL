@@ -1,21 +1,80 @@
-let db = []; 
+// =====================================================================
+//  ARKTECH STORE — app.js
+//  Versión actualizada con:
+//  ✅ Filtro por categoría corregido
+//  ✅ renderTienda() acepta lista filtrada
+//  ✅ Módulo de pedidos: estado, guía de envío, comprobante
+// =====================================================================
+
+let db = [];
 let cart = [];
 let tempImages = [];
 
+// ─────────────────────────────────────────────
+//  NAVEGACIÓN
+// ─────────────────────────────────────────────
 function navegar(seccion) {
+    // Ocultar todas las secciones
     document.querySelectorAll('section').forEach(s => s.style.display = 'none');
-    document.getElementById('vista-' + seccion).style.display = 'block';
-    if(seccion === 'tienda') renderTienda();
-    if(seccion === 'admin') renderAdmin();
-    if(seccion === 'carrito') renderCarrito();
+
+    // 'pedidos' tiene id diferente al patrón 'vista-X'
+    if (seccion === 'pedidos') {
+        document.getElementById('section-pedidos').style.display = 'block';
+        return; // salimos aquí, lo demás no aplica
+    }
+
+    const vista = document.getElementById('vista-' + seccion);
+    if (vista) vista.style.display = 'block';
+
+    if (seccion === 'tienda') {
+        const titulo = document.querySelector('#vista-tienda h1');
+        if (titulo) titulo.innerText = 'Nuestros Productos';
+        renderTienda();
+    }
+    if (seccion === 'admin')   renderAdmin();
+    if (seccion === 'carrito') renderCarrito();
 }
 
-// MANEJO DE IMÁGENES
-document.getElementById('file-input').addEventListener('change', async function(e) {
+// ─────────────────────────────────────────────
+//  SIDEBAR
+// ─────────────────────────────────────────────
+function toggleSidebar() {
+    const side = document.getElementById('sidebar');
+    side.style.width = (side.style.width === '250px') ? '0' : '250px';
+}
+
+function toggleAdmin() {
+    const caja   = document.getElementById('menu-admin-box');
+    const flecha = document.getElementById('flecha-admin');
+    if (caja.style.maxHeight && caja.style.maxHeight !== '0px') {
+        caja.style.maxHeight = '0px';
+        flecha.style.transform = 'rotate(0deg)';
+    } else {
+        caja.style.maxHeight = caja.scrollHeight + 'px';
+        flecha.style.transform = 'rotate(180deg)';
+    }
+}
+
+function toggleCategorias() {
+    const caja   = document.getElementById('menu-cat-box');
+    const flecha = document.getElementById('flecha-cat');
+    if (caja.style.maxHeight && caja.style.maxHeight !== '0px') {
+        caja.style.maxHeight = '0px';
+        flecha.style.transform = 'rotate(0deg)';
+    } else {
+        caja.style.maxHeight = caja.scrollHeight + 'px';
+        flecha.style.transform = 'rotate(180deg)';
+    }
+}
+
+// ─────────────────────────────────────────────
+//  MANEJO DE IMÁGENES (subida)
+// ─────────────────────────────────────────────
+document.getElementById('file-input').addEventListener('change', async function (e) {
     const previewContainer = document.getElementById('file-previews');
-    previewContainer.innerHTML = ""; 
-    tempImages = []; 
-    
+    previewContainer.innerHTML = '';
+    tempImages = [];
+
     const archivos = Array.from(e.target.files);
     for (const file of archivos) {
         const reader = new FileReader();
@@ -31,84 +90,105 @@ document.getElementById('file-input').addEventListener('change', async function(
     }
 });
 
-// GUARDAR / EDITAR PRODUCTO
-// --- LÓGICA DE FORMULARIO UNIFICADA (STOCK + MYSQL) ---
+// ─────────────────────────────────────────────
+//  GUARDAR / EDITAR PRODUCTO
+// ─────────────────────────────────────────────
 document.getElementById('product-form').onsubmit = async (e) => {
     e.preventDefault();
-    
-    // 1. CAPTURA DE DATOS (Usando tus IDs reales)
+
     const idEdit = document.getElementById('edit-id').value;
     const datos = {
-        nombre: document.getElementById('name').value,
-        precio: parseFloat(document.getElementById('price').value) || 0,
-        stock: parseInt(document.getElementById('stock').value) || 0,
+        nombre:      document.getElementById('name').value,
+        precio:      parseFloat(document.getElementById('price').value) || 0,
+        stock:       parseInt(document.getElementById('stock').value) || 0,
         descripcion: document.getElementById('desc').value,
-        categoria: "Tecnología", // Como el ejemplo que viste
-        imagen_url: "" 
+        categoria:   document.getElementById('id_categorias').value,
+        imagen_url:  tempImages[0]
     };
 
-    // 2. VALIDACIÓN (Evita que el código se frene)
-    if(!idEdit && tempImages.length < 3) {
-        return alert("Por favor selecciona al menos 3 imágenes.");
-    }
+    const urlApi = idEdit
+        ? `http://localhost:3000/api/productos/editar/${idEdit}`
+        : 'http://localhost:3000/api/productos/nuevo';
+    const metodo = idEdit ? 'PUT' : 'POST';
 
     try {
-        // 3. EL ENVÍO (Usando 'localhost' que es lo que te funcionó)
-        const res = await fetch('http://localhost:3000/api/productos/nuevo', {
-            method: 'POST',
+        const res = await fetch(urlApi, {
+            method: metodo,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(datos)
         });
-
         const r = await res.json();
 
-        if(r.success) {
-            // 4. ACTUALIZACIÓN VISUAL INMEDIATA
-            db.push({ 
-                id: r.id_producto, 
-                name: datos.nombre, 
-                price: datos.precio, 
-                stock: datos.stock, 
-                desc: datos.descripcion, 
-                imgs: [...tempImages] 
-            });
-
-            alert("✅ ¡LOGRADO! Guardado en MySQL y visible en Stock.");
-            
-            resetForm();   // Limpia el formulario
-            renderAdmin(); // Refresca la tabla de abajo
+        if (r.success) {
+            if (idEdit) {
+                const index = db.findIndex(p => p.id == idEdit);
+                if (index !== -1) {
+                    db[index] = {
+                        ...db[index],
+                        name:        datos.nombre,
+                        price:       datos.precio,
+                        stock:       datos.stock,
+                        desc:        datos.descripcion,
+                        id_categoria: datos.categoria,
+                        imgs:        tempImages.length > 0 ? [...tempImages] : db[index].imgs
+                    };
+                }
+                alert('✅ Producto actualizado correctamente.');
+            } else {
+                db.push({
+                    id:    r.id_producto,
+                    name:  datos.nombre,
+                    price: datos.precio,
+                    stock: datos.stock,
+                    desc:  datos.descripcion,
+                    imgs:  [...tempImages],
+                    id_categoria: datos.categoria
+                });
+                alert('✅ Producto nuevo guardado.');
+            }
+            resetForm();
+            renderAdmin();
+            renderTienda();
         } else {
-            alert("❌ Error de MySQL: " + r.error);
+            alert('❌ Error de MySQL: ' + r.error);
         }
     } catch (error) {
-        // Si entra aquí, es un problema de red del navegador
-        console.error("Error detectado:", error);
-        alert("❌ Error: El navegador no pudo enviar los datos. Revisa la consola F12.");
+        alert('❌ Error: El servidor no respondió.');
     }
 };
 
-// --- FUNCIONES DE APOYO ---
+// ─────────────────────────────────────────────
+//  RESET FORMULARIO
+// ─────────────────────────────────────────────
 function resetForm() {
     document.getElementById('product-form').reset();
-    document.getElementById('edit-id').value = "";
-    document.getElementById('file-previews').innerHTML = "";
-    document.getElementById('form-title').innerText = "Gestión de Inventario";
-    document.getElementById('save-btn').innerText = "GUARDAR PRODUCTO";
-    document.getElementById('cancel-btn').style.display = "none";
+    document.getElementById('edit-id').value = '';
+    document.getElementById('file-previews').innerHTML = '';
+    document.getElementById('form-title').innerText = 'Gestión de Inventario';
+    document.getElementById('save-btn').innerText = 'GUARDAR PRODUCTO';
+    const cancelBtn = document.getElementById('cancel-btn');
+    if (cancelBtn) cancelBtn.style.display = 'none';
     tempImages = [];
 }
 
+// ─────────────────────────────────────────────
+//  INVENTARIO ADMIN
+// ─────────────────────────────────────────────
 function renderAdmin() {
     const list = document.getElementById('inventory-list');
-    if(!list) return;
+    if (!list) return;
     list.innerHTML = db.map(p => `
         <tr>
             <td>#${p.id.toString().slice(-4)}</td>
             <td><strong>${p.name}</strong></td>
             <td>${p.stock}</td>
             <td>
-                <button onclick="editProduct(${p.id})" style="color:var(--teal); background:none; border:none; cursor:pointer; font-size:1.1rem; margin-right:12px;"><i class="fas fa-edit"></i></button>
-                <button onclick="deleteProduct(${p.id})" style="color:red; background:none; border:none; cursor:pointer; font-size:1.1rem;"><i class="fas fa-trash"></i></button>
+                <button onclick="editProduct(${p.id})" style="color:var(--teal); background:none; border:none; cursor:pointer; font-size:1.1rem; margin-right:12px;">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button onclick="deleteProduct(${p.id})" style="color:red; background:none; border:none; cursor:pointer; font-size:1.1rem;">
+                    <i class="fas fa-trash"></i>
+                </button>
             </td>
         </tr>
     `).join('');
@@ -116,51 +196,98 @@ function renderAdmin() {
 
 function editProduct(id) {
     const p = db.find(x => x.id === id);
-    document.getElementById('edit-id').value = p.id;
-    document.getElementById('name').value = p.name;
-    document.getElementById('price').value = p.price;
-    document.getElementById('stock').value = p.stock;
-    document.getElementById('desc').value = p.desc;
-    document.getElementById('form-title').innerText = "Editando: " + p.name;
-    document.getElementById('save-btn').innerText = "ACTUALIZAR CAMBIOS";
-    document.getElementById('cancel-btn').style.display = "block";
+    if (!p) return;
+    document.getElementById('edit-id').value  = p.id;
+    document.getElementById('name').value     = p.name;
+    document.getElementById('price').value    = p.price;
+    document.getElementById('stock').value    = p.stock;
+    document.getElementById('desc').value     = p.desc;
+    document.getElementById('form-title').innerText  = 'Editando: ' + p.name;
+    document.getElementById('save-btn').innerText    = 'ACTUALIZAR CAMBIOS';
+    const cancelBtn = document.getElementById('cancel-btn');
+    if (cancelBtn) cancelBtn.style.display = 'block';
     navegar('admin');
 }
 
-function deleteProduct(id) {
-    if(confirm("¿Eliminar producto?")) {
-        db = db.filter(p => p.id !== id);
-        renderAdmin();
+async function deleteProduct(id) {
+    if (!confirm('¿Estás seguro de eliminar este producto de la base de datos?')) return;
+    try {
+        const res = await fetch(`http://localhost:3000/api/productos/eliminar/${id}`, { method: 'DELETE' });
+        const r   = await res.json();
+        if (r.success) {
+            db = db.filter(p => p.id !== id);
+            renderAdmin();
+            renderTienda();
+            alert('✅ Eliminado permanentemente.');
+        } else {
+            alert('❌ Error: ' + r.error);
+        }
+    } catch (error) {
+        alert('❌ No se pudo conectar con el servidor.');
     }
 }
 
-// --- TIENDA Y CARRITO ---
-function renderTienda() {
+// ─────────────────────────────────────────────
+//  TIENDA — renderTienda acepta lista filtrada
+// ─────────────────────────────────────────────
+function renderTienda(lista) {
     const grid = document.getElementById('grid-productos');
-    if(!grid) return;
-    grid.innerHTML = db.length === 0 ? '<p>No hay equipos registrados.</p>' : db.map(p => `
-        <div class="card">
-            <img src="${p.imgs[0]}" onclick="verDetalle(${p.id})">
-            <h3>${p.name}</h3>
-            <p style="color:var(--teal); font-weight:bold; margin:10px 0;">$${p.price.toLocaleString()}</p>
-            <button onclick="addToCart(${p.id})" class="btn-primary" style="padding:10px; font-size:0.8rem">AGREGAR AL CARRITO</button>
-        </div>
-    `).join('');
+    if (!grid) return;
+    const productos = lista || db;
+    grid.innerHTML = productos.length === 0
+        ? '<p style="text-align:center; padding:40px;">No hay productos en esta categoría.</p>'
+        : productos.map(p => `
+            <div class="card">
+                <img src="${p.imgs[0]}" onclick="verDetalle(${p.id})" style="cursor:pointer;">
+                <h3>${p.name}</h3>
+                <p style="color:var(--teal); font-weight:bold; margin:10px 0;">$${p.price.toLocaleString()}</p>
+                <button onclick="addToCart(${p.id})" class="btn-primary" style="padding:10px; font-size:0.8rem">AGREGAR AL CARRITO</button>
+            </div>
+        `).join('');
 }
 
+// ─────────────────────────────────────────────
+//  FILTRO POR CATEGORÍA — corregido
+// ─────────────────────────────────────────────
+function filtrarPorCategoria(idCat, nombreCat) {
+    navegar('tienda');
+    const titulo = document.querySelector('#vista-tienda h1');
+    if (titulo) titulo.innerText = 'Categoría: ' + nombreCat;
+    // Comparamos como String para evitar errores entre número y texto
+    const filtrados = db.filter(p => String(p.id_categoria) === String(idCat));
+    renderTienda(filtrados);
+    toggleSidebar();
+}
+
+// ─────────────────────────────────────────────
+//  FILTRAR DESDE BARRA DE BÚSQUEDA
+// ─────────────────────────────────────────────
+function filtrarProductos() {
+    const texto = document.getElementById('input-busqueda').value.toLowerCase();
+    const filtrados = db.filter(p => p.name.toLowerCase().includes(texto));
+    renderTienda(filtrados);
+}
+
+// ─────────────────────────────────────────────
+//  DETALLE DE PRODUCTO
+// ─────────────────────────────────────────────
 function verDetalle(id) {
     const p = db.find(x => x.id === id);
+    if (!p) return;
     navegar('detalle');
-    document.getElementById('det-name').innerText = p.name;
+    document.getElementById('det-name').innerText  = p.name;
     document.getElementById('det-price').innerText = `$${p.price.toLocaleString()}`;
-    document.getElementById('det-desc').innerText = p.desc;
-    document.getElementById('main-img').src = p.imgs[0];
+    document.getElementById('det-desc').innerText  = p.desc;
+    document.getElementById('main-img').src        = p.imgs[0];
     document.getElementById('thumb-container').innerHTML = p.imgs.map(img => `
         <img src="${img}" class="thumb" onclick="document.getElementById('main-img').src='${img}'">
     `).join('');
     document.getElementById('add-to-cart-btn-det').onclick = () => addToCart(p.id);
 }
 
+// ─────────────────────────────────────────────
+//  CARRITO
+// ─────────────────────────────────────────────
 function addToCart(id) {
     const p = db.find(x => x.id === id);
     if (!p) return;
@@ -173,84 +300,27 @@ function addToCart(id) {
     const contador = document.getElementById('cart-count');
     if (contador) contador.innerText = cart.reduce((a, b) => a + b.qty, 0);
     localStorage.setItem('carrito', JSON.stringify(cart));
-    alert("Producto agregado: " + p.name);
+    alert('Producto agregado: ' + p.name);
 }
 
-async function prepararPago() {
-    if (cart.length === 0) return alert("El carrito está vacío.");
-
-    // 1. Guardar localmente para la siguiente página
-    localStorage.setItem('carrito', JSON.stringify(cart));
-
-    try {
-        // 2. Mandar CADA producto del carrito a MySQL
-        // Usamos un bucle para recorrer todo el carrito
-        for (const item of cart) {
-            await fetch('http://localhost:3000/api/carrito/guardar', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    session_id: 'CLIENTE_' + Date.now(), // Genera un ID único basado en la hora
-                    id_producto: item.id,
-                    cantidad: item.qty
-                })
-            });
-        }
-
-        // 3. Cuando termine de guardar todo, saltamos a la página de datos del cliente
-        window.location.href = 'clientes.html';
-        
-    } catch (e) {
-        // Si el servidor falla, igual lo mandamos al pago usando el localStorage
-        console.log("Error en DB, usando copia local...");
-        window.location.href = 'clientes.html';
-    }
+function removeFromCart(id) {
+    cart = cart.filter(x => x.id !== id);
+    const contador = document.getElementById('cart-count');
+    if (contador) contador.innerText = cart.reduce((a, b) => a + b.qty, 0);
+    renderCarrito();
 }
-
-// Inicialización
-navegar('tienda');
-async function cargarProductosDesdeBD() {
-    try {
-        const res = await fetch('http://localhost:3000/api/productos');
-        const productosSQL = await res.json();
-
-        // Convertimos el formato de MySQL al formato que usa tu Stock visual
-        db = productosSQL.map(p => ({
-            id: p.id_producto,
-            name: p.nombre,
-            price: parseFloat(p.precio),
-            stock: p.stock_actual,
-            desc: p.descripcion,
-            imgs: [p.imagen_url || 'img/placeholder.jpg', '', ''] // Ajusta según tus fotos
-        }));
-
-        renderAdmin(); // Refresca la tabla de Stock
-        renderTienda(); // Refresca la vitrina de venta
-    } catch (error) {
-        console.error("Error cargando productos:", error);
-    }
-}
-
-// LLAMADA CRÍTICA: Ejecuta esto al final del archivo o en el DOMContentLoaded
-cargarProductosDesdeBD();
 
 function renderCarrito() {
-    // Buscamos el cuerpo de la tabla (donde van las filas)
-    const tabla = document.querySelector('#vista-carrito tbody'); 
+    const tabla = document.querySelector('#vista-carrito tbody');
     if (!tabla) return;
-
-    tabla.innerHTML = ''; // Limpiamos lo que haya
+    tabla.innerHTML = '';
     let total = 0;
 
-    // Recorremos el carrito (lo que el usuario eligió)
     cart.forEach(item => {
-        // IMPORTANTE: Buscamos en 'db' (que ya tiene los datos de MySQL)
         const p = db.find(producto => producto.id == item.id);
-
         if (p) {
             const subtotal = p.price * item.qty;
             total += subtotal;
-
             tabla.innerHTML += `
                 <tr>
                     <td><img src="${p.imgs[0]}" width="50" style="border-radius:5px;"></td>
@@ -265,268 +335,581 @@ function renderCarrito() {
         }
     });
 
-// ... (aquí termina tu bucle cart.forEach)
-
-    console.log("Suma total calculada:", total); // Esto es para que veas en la consola si está sumando
-
     const etiquetaTotal = document.getElementById('txt-total-carrito');
-    
-    if (etiquetaTotal) {
-        etiquetaTotal.innerText = `Total: $${total.toLocaleString()}`;
-    } else {
-        console.error("No encontré la etiqueta 'txt-total-carrito' en el HTML");
-    }
+    if (etiquetaTotal) etiquetaTotal.innerText = `Total: $${total.toLocaleString()}`;
 }
 
-// Generamos una llave única para esta sesión de compra
-const sessionId = 'SESSION-' + Math.random().toString(36).substr(2, 9);
-
-async function guardarCarritoEnBD() {
-    if (cart.length === 0) return;
-
-    try {
-        // Enviamos cada producto del carrito a la nueva ruta del servidor
-        for (const item of cart) {
-            await fetch('http://localhost:3000/api/carrito/guardar', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    session_id: sessionId,
-                    id_producto: item.id,
-                    cantidad: item.qty
-                })
-            });
-        }
-        console.log("✅ Carrito sincronizado con MySQL");
-    } catch (error) {
-        console.error("❌ Error al sincronizar carrito:", error);
-    }
-}
-
-async function procesarPagoFinal(event) {
-    event.preventDefault(); // Evita que la página se recargue
-
-    // Capturamos los datos del formulario
-    const datosCliente = {
-        nombre: document.getElementById('nom_cliente').value,
-        email: document.getElementById('email_cliente').value,
-        telefono: document.getElementById('tel_cliente').value,
-        direccion: document.getElementById('dir_cliente').value,
-        total: totalCalculado // La variable que ya suma bien
-    };
-
-    try {
-        const response = await fetch('http://localhost:3000/api/ventas/nueva', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(datosCliente)
-        });
-
-        const resultado = await response.json();
-
-        if (resultado.success) {
-            alert("¡Compra realizada con éxito! Orden #" + resultado.id_venta);
-            cart = []; // Limpiamos el carrito
-            localStorage.clear();
-            window.location.href = 'index.html'; // Volvemos al inicio
-        }
-    } catch (error) {
-        alert("Hubo un error al procesar la venta");
-        console.error(error);
-    }
-}
-
+// ─────────────────────────────────────────────
+//  FINALIZAR COMPRA
+// ─────────────────────────────────────────────
 async function prepararEnvioYSalir() {
-    // 1. Si el carrito está vacío, no hacemos nada
     if (!cart || cart.length === 0) {
-        alert("El carrito está vacío, Rodolfo.");
+        alert('El carrito está vacío.');
         return;
     }
-
-    // 2. CALCULAMOS EL TOTAL AQUÍ MISMO (Para estar 100% seguros)
     let sumaTotal = 0;
     cart.forEach(item => {
-        // Buscamos el precio real en tu base de datos local 'db'
         const p = db.find(producto => producto.id == item.id);
-        if (p) {
-            sumaTotal += p.price * item.qty;
-        }
+        if (p) sumaTotal += p.price * item.qty;
     });
-
-    // 3. GUARDAMOS EN LA "MEMORIA" DEL NAVEGADOR
-    // Esta es la llave que abrirá la puerta en clientes.html
     localStorage.setItem('total_compra', sumaTotal);
-    
-    console.log("Total calculado y guardado: " + sumaTotal);
-
-    // 4. SALTAMOS AL FORMULARIO
+    localStorage.setItem('carrito', JSON.stringify(cart));
     window.location.href = 'clientes.html';
 }
 
-function toggleSidebar() {
-    const side = document.getElementById('sidebar');
-    // Si la barra está escondida (0px), la pone en 250px. Si no, la esconde.
-    if (side.style.width === '250px') {
-        side.style.width = '0';
-    } else {
-        side.style.width = '250px';
+// ─────────────────────────────────────────────
+//  FORMULARIO DE CLIENTE (finalizar pedido)
+// ─────────────────────────────────────────────
+const formCliente = document.getElementById('form-cliente');
+if (formCliente) {
+    formCliente.onsubmit = async (e) => {
+        e.preventDefault();
+        const datosPedido = {
+            nombre_cliente: document.getElementById('cliente-nombre').value,
+            documento:      document.getElementById('cliente-id').value,
+            telefono:       document.getElementById('cliente-tel').value,
+            email:          document.getElementById('cliente-email').value,
+            direccion:      document.getElementById('cliente-dir').value,
+            carrito:        cart,
+            total:          cart.reduce((sum, item) => {
+                                const p = db.find(x => x.id == item.id);
+                                return sum + (p ? p.price * item.qty : 0);
+                            }, 0)
+        };
+
+        try {
+            const res = await fetch('http://localhost:3000/api/crear-pedido', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(datosPedido)
+            });
+            const r = await res.json();
+            if (r.success) {
+                alert(`✅ ¡Pedido registrado! Tu número de orden es: ${r.orden}`);
+                cart = [];
+                localStorage.clear();
+                navegar('tienda');
+            } else {
+                alert('❌ Error al guardar el pedido: ' + r.error);
+            }
+        } catch (error) {
+            console.error('Error en la compra:', error);
+            alert('❌ No se pudo conectar con el servidor.');
+        }
+    };
+}
+
+// ─────────────────────────────────────────────
+//  CARGA INICIAL DE PRODUCTOS DESDE BD
+// ─────────────────────────────────────────────
+async function cargarProductosDesdeBD() {
+    try {
+        const res = await fetch('http://localhost:3000/api/productos');
+        const productosSQL = await res.json();
+        db = productosSQL.map(p => ({
+            id:          p.id_producto,
+            name:        p.nombre,
+            price:       parseFloat(p.precio),
+            stock:       p.stock_actual,
+            desc:        p.descripcion,
+            imgs:        [p.imagen_url || 'https://via.placeholder.com/150'],
+            id_categoria: p.id_categorias || p.categoria
+        }));
+        renderAdmin();
+        renderTienda();
+    } catch (error) {
+        console.error('Error cargando productos:', error);
     }
 }
-async function rellenarComboCategorias() {
+
+// ─────────────────────────────────────────────
+//  CATEGORÍAS — sidebar y combo del formulario
+// ─────────────────────────────────────────────
+async function cargarCategoriasSidebar() {
     try {
-        const respuesta = await fetch('http://localhost:3000/api/obtener-categorias');
-        const listaCategorias = await respuesta.json();
-        
-        const combo = document.getElementById('id_categorias');
-        
-        if (combo) {
-            // Limpiamos el "Cargando..." y dejamos una opción inicial
-            combo.innerHTML = '<option value="">Seleccione una categoría</option>';
-            
-            // Recorremos los datos usando tus nombres de campo
-            listaCategorias.forEach(cat => {
-                const opcion = document.createElement('option');
-                opcion.value = cat.id_categorias;        // ID de la base de datos
-                opcion.textContent = cat.nombre_categorias; // Nombre visible
-                combo.appendChild(opcion);
-            });
-            console.log("Categorías cargadas correctamente.");
+        const res       = await fetch('http://localhost:3000/api/obtener-categorias');
+        const categorias = await res.json();
+        const menuLateral = document.getElementById('menu-cat-box');
+        if (menuLateral) {
+            menuLateral.innerHTML = categorias.map(cat => `
+                <a href="#" onclick="filtrarPorCategoria(${cat.id_categorias}, '${cat.nombre_categorias}')">
+                    <i class="fas fa-chevron-right"></i> ${cat.nombre_categorias}
+                </a>
+            `).join('');
         }
-    } catch (error) {
-        console.error("No se pudieron cargar las categorías:", error);
+    } catch (e) {
+        console.error('Error cargando categorías sidebar:', e);
     }
 }
 
 async function cargarComboCategorias() {
     try {
-        const respuesta = await fetch('http://localhost:3000/api/obtener-categorias');
-        const categorias = await respuesta.json();
-        
-        const combo = document.getElementById('id_categorias');
-        
+        const res       = await fetch('http://localhost:3000/api/obtener-categorias');
+        const categorias = await res.json();
+        const combo      = document.getElementById('id_categorias');
         if (combo) {
-            // Dejamos el combo limpio con la opción por defecto
             combo.innerHTML = '<option value="">Seleccione una categoría</option>';
-            
-            // Insertamos cada categoría de la base de datos
             categorias.forEach(cat => {
                 const opt = document.createElement('option');
-                opt.value = cat.id_categorias;        // El ID
-                opt.textContent = cat.nombre_categorias; // El Nombre
+                opt.value       = cat.id_categorias;
+                opt.textContent = cat.nombre_categorias;
                 combo.appendChild(opt);
             });
-            console.log("✅ Combo de categorías cargado");
         }
     } catch (error) {
-        console.error("❌ Error al cargar combo:", error);
+        console.error('Error al cargar combo de categorías:', error);
     }
 }
 
-async function cargarCombo() {
-    try {
-        const res = await fetch('http://localhost:3000/api/obtener-categorias');
-        const data = await res.json();
-        const select = document.getElementById('id_categorias');
+// ─────────────────────────────────────────────
+//  MÓDULO DE PEDIDOS — ADMINISTRADOR
+// ─────────────────────────────────────────────
 
-        if (!select) return;
+let pedidoEnModal = null;
 
-        select.innerHTML = '<option value="">Seleccione una categoría</option>';
-
-        data.forEach(fila => {
-            // Esto es lo más importante: no busca nombres, busca posición
-            const columnas = Object.values(fila); 
-            const opt = document.createElement('option');
-            opt.value = columnas[0];    // El primer dato que encuentre
-            opt.textContent = columnas[1]; // El segundo dato
-            select.appendChild(opt);
-        });
-    } catch (err) {
-        console.error("Error:", err);
-    }
-}
-
-// BIEN (Esto te lleva a tu página de registro de cliente)
-function prepararEnvioYSalir() {
-    if (cart.length === 0) {
-        alert("El carrito está vacío.");
-        return;
-    }
-
-    const total = cart.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
-
-    // Guardamos los datos para que el formulario de cliente los use
-    localStorage.setItem('total_compra', total);
-    localStorage.setItem('carrito', JSON.stringify(cart));
-
-    // Si tu archivo de registro se llama clientes.html:
-    window.location.href = 'clientes.html'; 
-    
-    // O si el formulario está en el mismo index.html como una sección:
-    // navegar('cliente'); 
-}
-
-// Función para abrir/cerrar el acordeón
-function toggleAccordion(id) {
-    const content = document.getElementById(id);
-    const arrow = event.currentTarget.querySelector('.arrow');
-    
-    if (content.style.maxHeight) {
-        content.style.maxHeight = null;
-        arrow.classList.remove('rotate');
-    } else {
-        content.style.maxHeight = content.scrollHeight + "px";
-        arrow.classList.add('rotate');
-    }
-}
-
-// Función para cambiar entre secciones (Tienda vs Pedidos)
-function mostrarSeccion(id) {
-    // Ocultamos todas las secciones principales
-    document.getElementById('section-pedidos').style.display = 'none';
-    if(document.getElementById('contenedor-productos')) {
-        document.getElementById('contenedor-productos').style.display = 'none';
-    }
-    
-    // Mostramos la elegida
-    document.getElementById('section-' + id).style.display = 'block';
-    toggleSidebar(); // Cerramos el sidebar al elegir una opción
-}
-
-// Carga de pedidos desde el servidor
 async function cargarPedidosAdmin() {
     try {
         const response = await fetch('http://localhost:3000/api/admin/pedidos');
-        const pedidos = await response.json();
-        const tbody = document.getElementById('tabla-pedidos-admin');
-        tbody.innerHTML = '';
+        const pedidos  = await response.json();
+        const tbody    = document.getElementById('tabla-pedidos-admin');
+        if (!tbody) return;
 
+        actualizarContadoresPedidos(pedidos);
+        window._pedidosAdmin = pedidos;
+
+        tbody.innerHTML = '';
         pedidos.forEach(p => {
-            const fecha = new Date(p.fecha).toLocaleDateString();
+            const fecha = new Date(p.fecha).toLocaleDateString('es-CO');
+            const guiaNum   = (p.numero_guia   || '').replace(/'/g, "\\'");
+            const guiaTrans = (p.transportadora || '').replace(/'/g, "\\'");
             tbody.innerHTML += `
                 <tr style="border-bottom: 1px solid #eee;">
-                    <td style="padding: 12px;"><strong>${p.codigo_pedido}</strong></td>
-                    <td style="padding: 12px;">${p.nombre_cliente}<br><small>${p.telefono}</small></td>
-                    <td style="padding: 12px;">${fecha}</td>
-                    <td style="padding: 12px;">$${parseFloat(p.total).toLocaleString()}</td>
                     <td style="padding: 12px;">
-                        <span class="badge-${p.estado === 'Completado' ? 'success' : 'warning'}">${p.estado}</span>
+                        <strong style="color:#20b2aa;">${p.codigo_pedido || '—'}</strong>
                     </td>
                     <td style="padding: 12px;">
-                        <button onclick="generarDocumento('${p.codigo_pedido}')" style="background: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">
-                            <i class="fas fa-print"></i> Orden
-                        </button>
+                        ${p.nombre_cliente || '—'}<br>
+                        <small style="color:#888;">${p.telefono || ''}</small>
+                    </td>
+                    <td style="padding: 12px; font-size:0.85rem; color:#555;">${fecha}</td>
+                    <td style="padding: 12px; font-weight:bold;">
+                        $${parseFloat(p.total).toLocaleString()}
+                    </td>
+                    <td style="padding: 12px;">
+                        ${badgePedido(p.estado)}
+                        <select
+                            onchange="cambiarEstadoPedido(${p.id_pedido}, this.value)"
+                            style="margin-top:6px; width:100%; padding:4px 6px; border-radius:6px; border:1px solid #ddd; font-size:0.8rem; cursor:pointer;">
+                            <option value="Pendiente" ${p.estado === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
+                            <option value="En camino" ${p.estado === 'En camino' ? 'selected' : ''}>En camino</option>
+                            <option value="Entregado" ${p.estado === 'Entregado' ? 'selected' : ''}>Entregado</option>
+                        </select>
+                    </td>
+                    <td style="padding: 12px; font-size:0.82rem;">
+                        ${p.numero_guia
+                            ? `<span style="color:#20b2aa; font-weight:bold;">${p.numero_guia}</span><br>
+                               <small>${p.transportadora || ''}</small>`
+                            : '<span style="color:#aaa;">Sin guía</span>'
+                        }
+                    </td>
+                    <td style="padding: 12px;">
+                        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                            <button onclick="abrirModalGuia(${p.id_pedido}, '${guiaNum}', '${guiaTrans}')"
+                                title="Adjuntar guía"
+                                style="background:#17a2b8; color:white; border:none; padding:5px 9px; border-radius:5px; cursor:pointer; font-size:0.8rem;">
+                                <i class="fas fa-truck"></i> Guía
+                            </button>
+                            <button onclick="verComprobantePedido(${p.id_pedido})"
+                                title="Ver comprobante"
+                                style="background:#6c757d; color:white; border:none; padding:5px 9px; border-radius:5px; cursor:pointer; font-size:0.8rem;">
+                                <i class="fas fa-file-alt"></i> Comprobante
+                            </button>
+                            <button onclick="eliminarPedido(${p.id_pedido}, '${p.codigo_pedido}')"
+                                title="Eliminar pedido"
+                                style="background:#dc3545; color:white; border:none; padding:5px 9px; border-radius:5px; cursor:pointer; font-size:0.8rem;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
                     </td>
                 </tr>
             `;
         });
+
     } catch (error) {
-        console.error("Error:", error);
+        console.error('Error cargando pedidos:', error);
+        Swal.fire('Error', 'No se pudieron cargar los pedidos del servidor.', 'error');
     }
 }
-// Ejecutar al cargar
-window.addEventListener('DOMContentLoaded', cargarCombo);
+
+// ── Eliminar pedido ───────────────────────────────────────────────────
+async function eliminarPedido(idPedido, codigoPedido) {
+    const confirmacion = await Swal.fire({
+        title: '¿Eliminar pedido?',
+        html: `El pedido <strong>${codigoPedido}</strong> será eliminado permanentemente.<br><br>Esta acción no se puede deshacer.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (!confirmacion.isConfirmed) return;
+
+    try {
+        const res = await fetch(`http://localhost:3000/api/pedidos/eliminar/${idPedido}`, {
+            method: 'DELETE'
+        });
+        const r = await res.json();
+        if (r.success) {
+            Swal.fire({ icon: 'success', title: 'Pedido eliminado', timer: 1500, showConfirmButton: false });
+            cargarPedidosAdmin();
+        } else {
+            Swal.fire('Error', 'No se pudo eliminar: ' + r.error, 'error');
+        }
+    } catch (error) {
+        Swal.fire('Error', 'No se pudo conectar con el servidor.', 'error');
+    }
+}
+
+// Devuelve el HTML del badge según el estado
+function badgePedido(estado) {
+    const estilos = {
+        'Pendiente':  'background:#fff3cd; color:#856404; border:1px solid #ffc107;',
+        'En camino':  'background:#cff4fc; color:#055160; border:1px solid #0dcaf0;',
+        'Entregado':  'background:#d1e7dd; color:#0a3622; border:1px solid #198754;'
+    };
+    const estilo = estilos[estado] || 'background:#eee; color:#333;';
+    return `<span style="display:inline-block; padding:3px 10px; border-radius:20px; font-size:0.75rem; font-weight:600; ${estilo}">${estado || 'Sin estado'}</span>`;
+}
+
+// Actualiza los contadores del resumen (si tienes elementos con esos IDs en el HTML)
+function actualizarContadoresPedidos(pedidos) {
+    const totalEl    = document.getElementById('contador-total-pedidos');
+    const pendEl     = document.getElementById('contador-pendientes');
+    const transitoEl = document.getElementById('contador-en-camino');
+    const entregEl   = document.getElementById('contador-entregados');
+
+    if (totalEl)    totalEl.innerText    = pedidos.length;
+    if (pendEl)     pendEl.innerText     = pedidos.filter(p => p.estado === 'Pendiente').length;
+    if (transitoEl) transitoEl.innerText = pedidos.filter(p => p.estado === 'En camino').length;
+    if (entregEl)   entregEl.innerText   = pedidos.filter(p => p.estado === 'Entregado').length;
+}
+
+// ── Cambiar estado de un pedido y guardarlo en MySQL ──────────────────
+async function cambiarEstadoPedido(idPedido, nuevoEstado) {
+    try {
+        const res = await fetch(`http://localhost:3000/api/pedidos/estado/${idPedido}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ estado: nuevoEstado })
+        });
+        const r = await res.json();
+        if (r.success) {
+            Swal.fire({ icon: 'success', title: 'Estado actualizado', text: nuevoEstado, timer: 1500, showConfirmButton: false });
+            cargarPedidosAdmin(); // Recarga la tabla para reflejar el cambio
+        } else {
+            Swal.fire('Error', 'No se pudo actualizar el estado: ' + r.error, 'error');
+        }
+    } catch (error) {
+        console.error('Error actualizando estado:', error);
+        Swal.fire('Error', 'No se pudo conectar con el servidor.', 'error');
+    }
+}
+
+// ── Modal: adjuntar guía de envío ─────────────────────────────────────
+function abrirModalGuia(idPedido, guiaActual, transportadoraActual) {
+    pedidoEnModal = idPedido;
+    Swal.fire({
+        title: '<i class="fas fa-truck"></i> Guía de envío',
+        html: `
+            <div style="text-align:left;">
+                <label style="font-weight:bold; display:block; margin-bottom:4px;">Número de guía</label>
+                <input id="swal-guia-num" class="swal2-input" placeholder="Ej: TCC-2025-98321" value="${guiaActual}" style="margin-bottom:12px;">
+
+                <label style="font-weight:bold; display:block; margin-bottom:4px;">Transportadora</label>
+                <input id="swal-transportadora" class="swal2-input" placeholder="Ej: TCC, Servientrega, Coordinadora..." value="${transportadoraActual}" style="margin-bottom:12px;">
+
+                <label style="font-weight:bold; display:block; margin-bottom:4px;">Archivo de guía (PDF o imagen)</label>
+                <input id="swal-guia-file" type="file" accept=".pdf,image/*" class="swal2-file" style="margin-top:4px;">
+            </div>
+        `,
+        confirmButtonText: 'Guardar guía',
+        confirmButtonColor: '#20b2aa',
+        cancelButtonText: 'Cancelar',
+        showCancelButton: true,
+        preConfirm: () => {
+            const num   = document.getElementById('swal-guia-num').value.trim();
+            const trans = document.getElementById('swal-transportadora').value.trim();
+            if (!num || !trans) {
+                Swal.showValidationMessage('Completa el número de guía y la transportadora.');
+                return false;
+            }
+            return { numero_guia: num, transportadora: trans };
+        }
+    }).then(result => {
+        if (result.isConfirmed) {
+            guardarGuiaPedido(pedidoEnModal, result.value.numero_guia, result.value.transportadora);
+        }
+    });
+}
+
+// Envía la guía al servidor
+async function guardarGuiaPedido(idPedido, numero_guia, transportadora) {
+    try {
+        const res = await fetch(`http://localhost:3000/api/pedidos/guia/${idPedido}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ numero_guia, transportadora })
+        });
+        const r = await res.json();
+        if (r.success) {
+            Swal.fire({ icon: 'success', title: '¡Guía guardada!', text: `${numero_guia} — ${transportadora}`, timer: 2000, showConfirmButton: false });
+            cargarPedidosAdmin();
+        } else {
+            Swal.fire('Error', 'No se pudo guardar la guía: ' + r.error, 'error');
+        }
+    } catch (error) {
+        console.error('Error guardando guía:', error);
+        Swal.fire('Error', 'No se pudo conectar con el servidor.', 'error');
+    }
+}
+
+// ── Ver comprobante (vista previa rápida en modal) ────────────────────
+function verComprobantePedido(idPedido) {
+    if (!window._pedidosAdmin) return;
+    const p = window._pedidosAdmin.find(x => x.id_pedido === idPedido);
+    if (!p) return;
+
+    const fecha = new Date(p.fecha).toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' });
+    const totalBruto = parseFloat(p.total);
+    const iva        = +(totalBruto * 0.19).toFixed(0);
+    const subtotal   = +(totalBruto - iva).toFixed(0);
+
+    Swal.fire({
+        title: `Comprobante de venta — ${p.codigo_pedido || '—'}`,
+        html: `
+            <table style="width:100%; text-align:left; font-size:0.88rem; border-collapse:collapse;">
+                <tr style="background:#f0fafa;">
+                    <td colspan="2" style="padding:8px 10px; font-weight:bold; color:#20b2aa; font-size:0.95rem;">
+                        Datos del vendedor
+                    </td>
+                </tr>
+                <tr><td style="padding:6px 10px; color:#888; width:45%;">Razón social</td><td style="padding:6px 10px;">Arktech Store</td></tr>
+                <tr style="border-bottom:1px solid #eee;"><td style="padding:6px 10px; color:#888;">NIT</td><td style="padding:6px 10px;">— (pendiente registro)</td></tr>
+
+                <tr style="background:#f0fafa;">
+                    <td colspan="2" style="padding:8px 10px; font-weight:bold; color:#20b2aa; font-size:0.95rem;">
+                        Datos del comprador
+                    </td>
+                </tr>
+                <tr><td style="padding:6px 10px; color:#888;">Nombre</td><td style="padding:6px 10px; font-weight:bold;">${p.nombre_cliente || '—'}</td></tr>
+                <tr><td style="padding:6px 10px; color:#888;">Documento</td><td style="padding:6px 10px;">${p.documento_cliente || '—'}</td></tr>
+                <tr><td style="padding:6px 10px; color:#888;">Teléfono</td><td style="padding:6px 10px;">${p.telefono || '—'}</td></tr>
+                <tr><td style="padding:6px 10px; color:#888;">Email</td><td style="padding:6px 10px;">${p.email || '—'}</td></tr>
+                <tr style="border-bottom:1px solid #eee;"><td style="padding:6px 10px; color:#888;">Dirección entrega</td><td style="padding:6px 10px;">${p.direccion || '—'}</td></tr>
+
+                <tr style="background:#f0fafa;">
+                    <td colspan="2" style="padding:8px 10px; font-weight:bold; color:#20b2aa; font-size:0.95rem;">
+                        Datos del pedido
+                    </td>
+                </tr>
+                <tr><td style="padding:6px 10px; color:#888;">N° de orden</td><td style="padding:6px 10px; font-weight:bold; color:#20b2aa;">${p.codigo_pedido || '—'}</td></tr>
+                <tr><td style="padding:6px 10px; color:#888;">Fecha</td><td style="padding:6px 10px;">${fecha}</td></tr>
+                <tr><td style="padding:6px 10px; color:#888;">Forma de pago</td><td style="padding:6px 10px;">Pago electrónico (ePayco)</td></tr>
+                <tr><td style="padding:6px 10px; color:#888;">Estado</td><td style="padding:6px 10px;">${badgePedido(p.estado)}</td></tr>
+                ${p.numero_guia ? `<tr><td style="padding:6px 10px; color:#888;">Guía envío</td><td style="padding:6px 10px;">${p.numero_guia} (${p.transportadora})</td></tr>` : ''}
+
+                <tr style="background:#f0fafa;">
+                    <td colspan="2" style="padding:8px 10px; font-weight:bold; color:#20b2aa; font-size:0.95rem;">
+                        Valores
+                    </td>
+                </tr>
+                <tr><td style="padding:6px 10px; color:#888;">Subtotal (sin IVA)</td><td style="padding:6px 10px;">$${subtotal.toLocaleString()}</td></tr>
+                <tr><td style="padding:6px 10px; color:#888;">IVA (19%)</td><td style="padding:6px 10px;">$${iva.toLocaleString()}</td></tr>
+                <tr style="border-top:2px solid #20b2aa;">
+                    <td style="padding:8px 10px; font-weight:bold;">TOTAL PAGADO</td>
+                    <td style="padding:8px 10px; font-weight:bold; color:#20b2aa; font-size:1.1rem;">$${totalBruto.toLocaleString()}</td>
+                </tr>
+            </table>
+        `,
+        confirmButtonText: '⬇ Descargar / Imprimir',
+        confirmButtonColor: '#20b2aa',
+        cancelButtonText: 'Cerrar',
+        showCancelButton: true,
+        width: 560
+    }).then(result => {
+        if (result.isConfirmed) descargarComprobantePDF(p);
+    });
+}
+
+// ── Generar PDF completo con QR ───────────────────────────────────────
+function descargarComprobantePDF(p) {
+    const fecha     = new Date(p.fecha).toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' });
+    const horaExped = new Date(p.fecha).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+    const totalBruto = parseFloat(p.total);
+    const iva        = +(totalBruto * 0.19).toFixed(0);
+    const subtotal   = +(totalBruto - iva).toFixed(0);
+
+    // Texto que codifica el QR — datos clave del pedido
+    const qrData = encodeURIComponent(
+        `ARKTECH STORE\nOrden: ${p.codigo_pedido}\nCliente: ${p.nombre_cliente}\nDoc: ${p.documento_cliente}\nTotal: $${totalBruto.toLocaleString()}\nFecha: ${fecha}\nEstado: ${p.estado}`
+    );
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${qrData}`;
+
+    const ventana = window.open('', '_blank');
+    ventana.document.write(`
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Comprobante ${p.codigo_pedido}</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; font-size: 13px; color: #333; background: #f5f5f5; }
+        .page { background: white; max-width: 700px; margin: 30px auto; padding: 40px; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+
+        /* ENCABEZADO */
+        .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #20b2aa; padding-bottom: 20px; margin-bottom: 20px; }
+        .logo-text { font-size: 28px; font-weight: bold; color: #1a252f; }
+        .logo-text span { color: #20b2aa; }
+        .empresa-info { font-size: 11px; color: #666; margin-top: 4px; line-height: 1.6; }
+        .doc-info { text-align: right; }
+        .doc-titulo { font-size: 18px; font-weight: bold; color: #20b2aa; }
+        .doc-num { font-size: 22px; font-weight: bold; color: #1a252f; }
+        .doc-fecha { font-size: 11px; color: #666; margin-top: 4px; }
+
+        /* ALERTA DOCUMENTO INTERNO */
+        .aviso { background: #fff8e1; border-left: 4px solid #ffc107; padding: 8px 12px; margin-bottom: 18px; font-size: 11px; color: #856404; border-radius: 0 4px 4px 0; }
+
+        /* SECCIONES */
+        .seccion-titulo { background: #1a252f; color: white; padding: 6px 12px; font-size: 11px; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 16px; margin-bottom: 0; border-radius: 4px 4px 0 0; }
+        .seccion-body { border: 1px solid #ddd; border-top: none; border-radius: 0 0 4px 4px; }
+        .fila { display: flex; border-bottom: 1px solid #f0f0f0; }
+        .fila:last-child { border-bottom: none; }
+        .fila-label { width: 38%; padding: 7px 12px; color: #888; background: #fafafa; font-size: 11px; }
+        .fila-valor { flex: 1; padding: 7px 12px; font-weight: 500; font-size: 12px; }
+
+        /* TABLA DE VALORES */
+        .valores { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        .valores td { padding: 8px 12px; border-bottom: 1px solid #eee; font-size: 12px; }
+        .valores td:last-child { text-align: right; font-weight: 500; }
+        .valores .total-row td { border-top: 2px solid #20b2aa; font-weight: bold; font-size: 14px; color: #20b2aa; padding-top: 12px; }
+
+        /* FOOTER CON QR */
+        .footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; }
+        .footer-texto { font-size: 10px; color: #aaa; line-height: 1.8; max-width: 400px; }
+        .footer-texto strong { color: #555; }
+        .qr-bloque { text-align: center; }
+        .qr-bloque img { width: 100px; height: 100px; border: 1px solid #ddd; border-radius: 4px; }
+        .qr-label { font-size: 9px; color: #aaa; margin-top: 4px; }
+
+        /* ESTADO BADGE */
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; }
+        .badge-Pendiente { background: #fff3cd; color: #856404; }
+        .badge-En.camino { background: #cff4fc; color: #055160; }
+        .badge-Entregado { background: #d1e7dd; color: #0a3622; }
+
+        @media print {
+            body { background: white; }
+            .page { box-shadow: none; margin: 0; border-radius: 0; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <!-- ENCABEZADO -->
+    <div class="header">
+        <div>
+            <div class="logo-text">Arktech<span>Store</span></div>
+            <div class="empresa-info">
+                Tienda virtual de tecnología<br>
+                NIT: — (pendiente de registro)<br>
+                Régimen: Régimen Simple / No responsable de IVA<br>
+                Cartagena, Colombia
+            </div>
+        </div>
+        <div class="doc-info">
+            <div class="doc-titulo">COMPROBANTE DE VENTA</div>
+            <div class="doc-num">${p.codigo_pedido || '—'}</div>
+            <div class="doc-fecha">Fecha: ${fecha} · ${horaExped} hrs</div>
+        </div>
+    </div>
+
+    <!-- AVISO -->
+    <div class="aviso">
+        ⚠ Este documento es un <strong>comprobante interno de pedido</strong>. No reemplaza la factura electrónica de venta exigida por la DIAN. La factura oficial será emitida por el proveedor de facturación electrónica autorizado.
+    </div>
+
+    <!-- DATOS DEL VENDEDOR -->
+    <div class="seccion-titulo">Datos del vendedor</div>
+    <div class="seccion-body">
+        <div class="fila"><div class="fila-label">Razón social</div><div class="fila-valor">Arktech Store</div></div>
+        <div class="fila"><div class="fila-label">NIT</div><div class="fila-valor">— (pendiente)</div></div>
+        <div class="fila"><div class="fila-label">Dirección</div><div class="fila-valor">Cartagena, Colombia</div></div>
+        <div class="fila"><div class="fila-label">Responsable de IVA</div><div class="fila-valor">No responsable</div></div>
+    </div>
+
+    <!-- DATOS DEL COMPRADOR -->
+    <div class="seccion-titulo">Datos del comprador (adquiriente)</div>
+    <div class="seccion-body">
+        <div class="fila"><div class="fila-label">Nombre / Razón social</div><div class="fila-valor"><strong>${p.nombre_cliente || '—'}</strong></div></div>
+        <div class="fila"><div class="fila-label">Documento (C.C. / NIT)</div><div class="fila-valor">${p.documento_cliente || '—'}</div></div>
+        <div class="fila"><div class="fila-label">Teléfono</div><div class="fila-valor">${p.telefono || '—'}</div></div>
+        <div class="fila"><div class="fila-label">Email</div><div class="fila-valor">${p.email || '—'}</div></div>
+        <div class="fila"><div class="fila-label">Dirección de entrega</div><div class="fila-valor">${p.direccion || '—'}</div></div>
+    </div>
+
+    <!-- DATOS DEL PEDIDO -->
+    <div class="seccion-titulo">Datos del pedido</div>
+    <div class="seccion-body">
+        <div class="fila"><div class="fila-label">N° de orden consecutivo</div><div class="fila-valor"><strong style="color:#20b2aa;">${p.codigo_pedido || '—'}</strong></div></div>
+        <div class="fila"><div class="fila-label">Fecha y hora de expedición</div><div class="fila-valor">${fecha} — ${horaExped} hrs</div></div>
+        <div class="fila"><div class="fila-label">Forma de pago</div><div class="fila-valor">Pago electrónico (ePayco)</div></div>
+        <div class="fila"><div class="fila-label">Estado del pedido</div><div class="fila-valor"><span class="badge badge-${p.estado}">${p.estado || '—'}</span></div></div>
+        ${p.numero_guia ? `
+        <div class="fila"><div class="fila-label">Guía de envío</div><div class="fila-valor">${p.numero_guia} — ${p.transportadora}</div></div>
+        ` : ''}
+    </div>
+
+    <!-- VALORES -->
+    <table class="valores">
+        <tr><td>Subtotal (sin IVA incluido)</td><td>$${subtotal.toLocaleString()}</td></tr>
+        <tr><td>IVA (19%) — discriminado</td><td>$${iva.toLocaleString()}</td></tr>
+        <tr class="total-row"><td>TOTAL PAGADO</td><td>$${totalBruto.toLocaleString()}</td></tr>
+    </table>
+
+    <!-- FOOTER CON QR -->
+    <div class="footer">
+        <div class="footer-texto">
+            <strong>Arktech Store</strong><br>
+            Conserve este comprobante como soporte de su compra.<br>
+            Para reclamaciones comuníquese por WhatsApp o email.<br><br>
+            <em>Documento generado el ${new Date().toLocaleDateString('es-CO')} — Arktech Store © ${new Date().getFullYear()}</em>
+        </div>
+        <div class="qr-bloque">
+            <img src="${qrUrl}" alt="QR del pedido" onerror="this.style.display='none'">
+            <div class="qr-label">Escanea para verificar<br>el pedido ${p.codigo_pedido}</div>
+        </div>
+    </div>
+
+</div>
+<script>window.onload = () => window.print();<\/script>
+</body>
+</html>
+    `);
+    ventana.document.close();
+}
+
+// ─────────────────────────────────────────────
+//  INICIALIZACIÓN
+// ─────────────────────────────────────────────
+navegar('tienda');
 
 window.onload = () => {
-    renderTienda(); // La función que ya tenías
-    cargarComboCategorias(); // <--- Agregamos esta
+    cargarProductosDesdeBD();
+    cargarComboCategorias();
+    cargarCategoriasSidebar();
 };

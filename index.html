@@ -19,28 +19,44 @@
 </head>
 <body>
 
-    <div id="sidebar" class="sidebar">
-        <div class="sidebar-header">
-            <h3>Menú Arktech</h3>
-            <button onclick="toggleSidebar()" class="close-btn">&times;</button>
-        </div>
-        <div class="sidebar-content">
-            <div class="admin-accordion">
-                <button class="accordion-btn" onclick="toggleAccordion('admin-menu')">
-                    <i class="fas fa-user-shield"></i> Administración <i class="fas fa-chevron-down arrow"></i>
-                </button>
-                <div id="admin-menu" class="accordion-content">
-                    <a href="#" onclick="navegar('admin')"><i class="fas fa-boxes"></i> Inventario / Carga</a>
-                    <a href="#" onclick="navegar('pedidos'); cargarPedidosAdmin();"><i class="fas fa-clipboard-list"></i> Ver Pedidos</a>
-                </div>
-            </div>
-            <div class="sidebar-divider"></div>
-            <a href="#" onclick="navegar('tienda')"><i class="fas fa-store"></i> Ir a la Tienda</a>
-            <a href="#"><i class="fas fa-tools"></i> Soporte Técnico</a>
-            <div class="sidebar-divider"></div>
-            <a href="https://wa.me/tu_numero" target="_blank" class="wa-link"><i class="fab fa-whatsapp"></i> WhatsApp Ventas</a>
-        </div>
+   <div id="sidebar" class="sidebar">
+    <div class="sidebar-header">
+        <h3>Menú Arktech</h3>
+        <button onclick="toggleSidebar()" class="close-btn">&times;</button>
     </div>
+    <div class="sidebar-content">
+        <div class="admin-accordion">
+            <button class="accordion-btn" onclick="toggleAdmin()">
+                <i class="fas fa-user-shield"></i> Administración 
+                <i id="flecha-admin" class="fas fa-chevron-down arrow"></i>
+            </button>
+            <div id="menu-admin-box" class="accordion-content">
+                <a href="#" onclick="navegar('admin')"><i class="fas fa-boxes"></i> Inventario / Carga</a>
+                <a href="#" onclick="navegar('pedidos'); cargarPedidosAdmin();"><i class="fas fa-clipboard-list"></i> Ver Pedidos</a>
+            </div>
+        </div>
+
+        <div class="sidebar-divider"></div>
+        <a href="#" onclick="navegar('tienda')"><i class="fas fa-store"></i> Ir a la Tienda</a>
+        <div class="sidebar-divider"></div>
+        
+        <div class="category-accordion">
+            <button class="accordion-btn" onclick="toggleCategorias()">
+                <span class="btn-content">
+                    <i class="fas fa-tags"></i> Categorías
+                </span>
+                <i id="flecha-cat" class="fas fa-chevron-down arrow"></i>
+            </button>
+            <div id="menu-cat-box" class="accordion-content">
+                </div>
+        </div>
+
+        <div class="sidebar-divider"></div>
+        <a href="#"><i class="fas fa-tools"></i> Soporte Técnico</a>
+        <div class="sidebar-divider"></div>
+        <a href="https://wa.me/tu_numero" target="_blank" class="wa-link"><i class="fab fa-whatsapp"></i> WhatsApp Ventas</a>
+    </div>
+</div>
 
     <nav class="navbar" style="height: 100px; padding: 0 5%; display: flex; align-items: center; justify-content: space-between; background-color: #1a252f; color: white;">
         <div style="display: flex; align-items: center; gap: 15px;">

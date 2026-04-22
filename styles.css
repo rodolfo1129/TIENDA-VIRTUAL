@@ -340,3 +340,105 @@ body {
 .producto-card:hover {
     transform: translateY(-5px);
 }
+
+
+/* --- ESTILOS PARA EL MENÚ DE CATEGORÍAS (SIDEBAR) --- */
+
+/* Contenedor del acordeón */
+.category-accordion {
+    margin: 10px 0;
+    padding: 0 15px;
+}
+
+/* Botón principal del acordeón */
+.accordion-btn {
+    width: 100%;
+    background: none;
+    border: none;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 10px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background 0.3s ease;
+    border-radius: 8px;
+}
+
+.accordion-btn:hover {
+    background: rgba(32, 178, 170, 0.1); /* Color turquesa suave de fondo */
+}
+
+.btn-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Icono de etiqueta */
+.category-icon {
+    color: #20b2aa; /* Tu color turquesa principal */
+    font-size: 1.1rem;
+}
+
+/* Flecha de apertura */
+.arrow {
+    font-size: 0.8rem;
+    transition: transform 0.3s ease;
+}
+
+.arrow.rotate {
+    transform: rotate(180deg);
+}
+
+/* Contenido desplegable (los enlaces) */
+.accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 0 0 8px 8px;
+    margin-top: 2px;
+}
+
+/* Enlaces de cada categoría */
+.accordion-content a {
+    display: block;
+    padding: 10px 15px 10px 45px;
+    color: #bdc3c7;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.accordion-content a i {
+    font-size: 0.7rem;
+    margin-right: 8px;
+    opacity: 0.6;
+}
+
+.accordion-content a:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #20b2aa;
+    padding-left: 50px; /* Pequeño salto a la derecha al pasar el mouse */
+    border-left: 3px solid #20b2aa;
+}
+
+.accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1); /* Transición más fluida */
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 0 0 8px 8px;
+    margin-top: 2px;
+    display: block; /* Asegúrate de que no sea display: none */
+}
+
+/* Separador del sidebar */
+.sidebar-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 15px 15px;
+}
